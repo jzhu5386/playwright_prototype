@@ -1,0 +1,42 @@
+{
+	"body": {
+		"access_token": "",
+		"decodedToken": {
+			"user": {
+				"https://mainstreet.com/permissions": [
+					"access-ops-tool",
+					"charge-refund",
+					"fund-account",
+					"read-payroll-details",
+					"sensitive-business-details",
+					"toggle-cash-advance-override",
+					"write-admin-features",
+					"write-ops-tool",
+					"write-orders",
+					"write-payroll-details",
+					"write-qualification",
+					"write-schedules",
+					"write-tax-forms"
+				],
+				"https://mainstreet.com/roles": [
+					"super-admin"
+				],
+				"nickname": "",
+				"name": "julie.zhu+ops_staging_test@mainstreet.com",
+				"picture": "https://s.gravatar.com/avatar/b869192bceda5410324239a7699af2f8?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fju.png",
+				"updated_at": "2022-02-16T18:50:12.449Z",
+				"email": "",
+				"email_verified": true,
+				"iss": "",
+				"sub": "",
+				"aud": "",
+				"iat": 1645037413,
+				"exp": 1645073412
+			}
+		},
+		"expires_in": 86400,
+		"id_token": "",
+		"scope": "openid profile email name nickname read:all write:all"
+	},
+	"expiresAt": 1645123813
+}
