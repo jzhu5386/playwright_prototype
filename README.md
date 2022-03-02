@@ -21,7 +21,7 @@ npx playwright install
 ```
 
 ## Test credential:
-In order to run the test, you will need to download a set of credential files found in QA Automation Credentials Folder and placed them under following structure:
+In order to run the test, you will need to download a set of credential files found in QA Automation Credentials Folder in LastPass and placed them under following structure:
 ```sh
 yunzhun@MainStreet-Zhun playwright_prototype % cd tests/resources
 yunzhun@MainStreet-Zhun resources % ll
