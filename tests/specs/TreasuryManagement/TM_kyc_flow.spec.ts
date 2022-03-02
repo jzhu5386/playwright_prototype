@@ -53,14 +53,6 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let apiContext: APIRequestContext;
 
   test.beforeAll(async ({ playwright, browser, baseURL, headless }) => {
-    // newUser = {
-    //   email: "qamainstreet+TMKYC1645587748@gmail.com",
-    //   password: "Temp12345",
-    //   confirmPassword: "Temp12345",
-    //   timestamp: timestamp,
-    //   firstName: "Dani",
-    //   lastName: "Bethena",
-    // };
     context = await browser.newContext();
     page = await context.newPage();
     let accountsPage = new AccountsPage(page);

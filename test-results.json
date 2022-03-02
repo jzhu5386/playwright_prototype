@@ -49,64 +49,112 @@
   },
   "suites": [
     {
-      "title": "tests/specs/TreasuryManagement/clean_kyc_review.spec.ts",
-      "file": "tests/specs/TreasuryManagement/clean_kyc_review.spec.ts",
+      "title": "tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts",
+      "file": "tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts",
       "line": 0,
       "column": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Internal clean up",
-          "file": "tests/specs/TreasuryManagement/clean_kyc_review.spec.ts",
-          "line": 4,
-          "column": 6,
+          "title": "Treasury Management Flowlabel:SMOKE",
+          "file": "tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts",
+          "line": 39,
+          "column": 15,
           "specs": [
             {
-              "title": "Attemps to clear out all the entities waiting for review",
+              "title": "Check all three client side emails and make sure we can navigate from email link",
               "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 240000,
+                  "timeout": 0,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectName": "",
                   "results": [
                     {
                       "workerIndex": 0,
-                      "status": "timedOut",
-                      "duration": 252572,
+                      "status": "failed",
+                      "duration": 181867,
                       "error": {
-                        "message": "Pending operations:\n  - page.click at tests/pages/AlloyPage.ts:74:23\n\npage.click: Target closed\n=========================== logs ===========================\nwaiting for selector \"td[class=\"outcome-cell \"] span:text-is(\"Manual Review\")\"\n============================================================",
-                        "stack": "Pending operations:\n  - page.click at tests/pages/AlloyPage.ts:74:23\n\npage.click: Target closed\n=========================== logs ===========================\nwaiting for selector \"td[class=\"outcome-cell \"] span:text-is(\"Manual Review\")\"\n============================================================\n    at AlloyPage.approveAllDocs (/Users/yunzhun/workspace/playwright_prototype/tests/pages/AlloyPage.ts:74:23)\n    at /Users/yunzhun/workspace/playwright_prototype/tests/specs/TreasuryManagement/clean_kyc_review.spec.ts:13:5"
+                        "message": "Missing required parameters: id",
+                        "stack": "Error: Missing required parameters: id\n    at createAPIRequestAsync (/Users/yunzhun/workspace/playwright_prototype/node_modules/googleapis-common/build/src/apirequest.js:116:15)\n    at Object.createAPIRequest (/Users/yunzhun/workspace/playwright_prototype/node_modules/googleapis-common/build/src/apirequest.js:49:9)\n    at Resource$Users$Messages.get (/Users/yunzhun/workspace/playwright_prototype/node_modules/googleapis/build/src/apis/gmail/v1.js:693:37)\n    at res (/Users/yunzhun/workspace/playwright_prototype/tests/helpers/GmailHelper.ts:139:26)\n    at new Promise (<anonymous>)\n    at extractMessageContentAsHTML (/Users/yunzhun/workspace/playwright_prototype/tests/helpers/GmailHelper.ts:138:21)\n    at parseHrefLinkValue (/Users/yunzhun/workspace/playwright_prototype/tests/helpers/GmailActions.ts:135:27)\n    at getHrefLinkValue (/Users/yunzhun/workspace/playwright_prototype/tests/helpers/GmailActions.ts:51:28)\n    at /Users/yunzhun/workspace/playwright_prototype/tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts:180:30"
                       },
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "found leeror\n"
+                        },
+                        {
+                          "text": "[\n  \u001b[32m'|'\u001b[39m,\n  \u001b[32m'Back'\u001b[39m,\n  \u001b[32m'Confirm that everything looks good to go.'\u001b[39m,\n  \u001b[32m'Done'\u001b[39m,\n  \u001b[32m'|'\u001b[39m,\n  \u001b[32m'Mainstreet QA Testing 1646245244'\u001b[39m,\n  \u001b[32m'(981) 187-3838'\u001b[39m,\n  \u001b[32m'85-0490764'\u001b[39m,\n  \u001b[32m'QA testing street 1646245244 9, QA city, NV 38042 United States'\u001b[39m,\n  \u001b[32m'cloud_receipts.jpgcloud_receipts.pdf'\u001b[39m,\n  \u001b[32m'cloud_receipts.jpg'\u001b[39m,\n  \u001b[32m'cloud_receipts.pdf'\u001b[39m\n]\n"
+                        },
+                        {
+                          "text": "subject: You're Approved!, to: qamainstreet+TMKYCEmails1646245244@gmail.com\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "attempting to wait for 10s\n"
+                        },
+                        {
+                          "text": "found messages: 0\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
                       "attachments": [
                         {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/yunzhun/workspace/playwright_prototype/test-results/tests-specs-TreasuryManagement-clean_kyc_review-Internal-clean-up-Attemps-to-clear-out-all-the-entities-waiting-for-review/video.webm"
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/yunzhun/workspace/playwright_prototype/test-results/tests-specs-TreasuryManagement-TM_kyc_flow_no_phoneNumbers-Treasury-Management-Flowlabel-SMOKE-Check-all--8258b-s-and-make-sure-we-can-navigate-from-email-link/test-failed-1.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/yunzhun/workspace/playwright_prototype/test-results/tests-specs-TreasuryManagement-clean_kyc_review-Internal-clean-up-Attemps-to-clear-out-all-the-entities-waiting-for-review/test-failed-1.png"
+                          "path": "/Users/yunzhun/workspace/playwright_prototype/test-results/tests-specs-TreasuryManagement-TM_kyc_flow_no_phoneNumbers-Treasury-Management-Flowlabel-SMOKE-Check-all--8258b-s-and-make-sure-we-can-navigate-from-email-link/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/yunzhun/workspace/playwright_prototype/test-results/tests-specs-TreasuryManagement-TM_kyc_flow_no_phoneNumbers-Treasury-Management-Flowlabel-SMOKE-Check-all--8258b-s-and-make-sure-we-can-navigate-from-email-link/test-failed-3.png"
                         }
                       ],
                       "errorLocation": {
-                        "file": "/Users/yunzhun/workspace/playwright_prototype/tests/specs/TreasuryManagement/clean_kyc_review.spec.ts",
-                        "column": 5,
-                        "line": 13
+                        "file": "/Users/yunzhun/workspace/playwright_prototype/tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts",
+                        "column": 30,
+                        "line": 180
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "file": "tests/specs/TreasuryManagement/clean_kyc_review.spec.ts",
-              "line": 7,
+              "file": "tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts",
+              "line": 140,
               "column": 3
             }
           ]
@@ -114,5 +162,10 @@
       ]
     }
   ],
-  "errors": []
+  "errors": [
+    {
+      "message": "locator.waitFor: Target closed\n=========================== logs ===========================\nwaiting for selector \"div[class*=\"Card__content\"]:text-is(\"Please fill out missing company information: valid phone number, investment accreditation verification\")\" to be visible\n============================================================",
+      "stack": "locator.waitFor: Target closed\n=========================== logs ===========================\nwaiting for selector \"div[class*=\"Card__content\"]:text-is(\"Please fill out missing company information: valid phone number, investment accreditation verification\")\" to be visible\n============================================================\n    at TMPage.submitCompanyForm (/Users/yunzhun/workspace/playwright_prototype/tests/pages/TMPage.ts:278:10)\n    at /Users/yunzhun/workspace/playwright_prototype/tests/specs/TreasuryManagement/TM_kyc_flow_no_phoneNumbers.spec.ts:150:5"
+    }
+  ]
 }

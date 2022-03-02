@@ -152,7 +152,7 @@ export class TMPage extends CommonOperations {
     phone?: boolean
   ): BeneficiaralOwner[] {
     let beneficialOnwers: Array<BeneficiaralOwner> = [];
-    count = denied || !phone ? 1 : count;
+    // count = denied || !phone ? 1 : count;
     for (let i = 0; i < count; i++) {
       let _default: BeneficiaralOwner = {
         firstName:
@@ -311,7 +311,8 @@ export class TMPage extends CommonOperations {
     let beneficials =
       options?.beneficials === undefined
         ? TMPage.buildDefaultTMBeneficialOwners(
-            (options?.denied === undefined || !options.denied) && options?.phone
+            (options?.denied === undefined || !options.denied) &&
+              (options?.phone === undefined || options.phone)
               ? 2
               : 1,
             options?.timestamp,

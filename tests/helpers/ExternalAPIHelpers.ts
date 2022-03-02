@@ -1,5 +1,5 @@
 import axios from "axios";
-import external_api_keys from "../resources/testAccounts/external_api_keys.json";
+import external_api_keys from "../resources/testAccounts/qa_external_api_keys.json";
 
 /**
  * amound in dollars
