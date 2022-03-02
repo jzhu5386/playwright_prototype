@@ -1,5 +1,5 @@
 import { expect, Frame, FrameLocator, Locator, Page } from "@playwright/test";
-import credentials from "../resources/testAccounts/external_credentials.json";
+import credentials from "../resources/testAccounts/qa_external_credentials.json";
 
 export class AlloyPage {
   readonly page: Page;

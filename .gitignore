@@ -1,6 +1,9 @@
 node_modules/
-tests/resources/gmailTokens
-tests/resources/testAccounts
-tests/helpers/JwtToken
+tests/resources/gmailTokens/*
+tests/resources/testAccounts/*
+tests/helpers/JwtToken.ts
+test-results/
+./test-results.json
+
 
 

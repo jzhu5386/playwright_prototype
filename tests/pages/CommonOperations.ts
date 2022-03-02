@@ -7,7 +7,7 @@ import {
 } from "@playwright/test";
 import path from "path";
 import { scrollElementIntoView } from "../helpers/Utils";
-import credentials from "../resources/testAccounts/external_credentials.json";
+import credentials from "../resources/testAccounts/qa_external_credentials.json";
 
 export class CommonOperations {
   readonly page: Page;
