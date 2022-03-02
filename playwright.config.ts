@@ -19,7 +19,10 @@ const config: PlaywrightTestConfig = {
   },
   timeout: 4 * 60 * 1000,
   retries: 0,
-  reporter: [["list"], ["json", { outputFile: "test-results.json" }]],
+  reporter: [
+    ["list"],
+    ["json", { outputFile: "test-results/test-results.json" }],
+  ],
   workers: process.env.CI ? 2 : undefined,
 };
 export default config;

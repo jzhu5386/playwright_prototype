@@ -107,8 +107,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     opsCompanyPage = new OpsCompanyPage(opsPage);
     await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
     await opsCompanyPage.createPromissoryNote({
-      amount:
-        generateRandomNumber(1, 25) * 1000000 + Number(companyInfo.companyId),
+      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
     });
     await opsCompanyPage.enableTreasuryManagment(newUser.email);
     await page.goto(baseURL!);

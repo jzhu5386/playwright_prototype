@@ -18,6 +18,7 @@ import {
   setCompanyDetailAPI,
   setEmployeeDetailsAPI,
   setPayrollConnectionAPI,
+  setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
 import {
   getTokenByGivenTestSession,
@@ -84,18 +85,8 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
       },
     });
 
-    await setPayrollConnectionAPI(apiContext, "Gusto");
-    await setCompanyDetailAPI(
-      apiContext,
-      CompanyDetailPage.buildDefaultCompanyDetail({
-        timestamp: timestamp,
-        yearofIncorporation: getCurrentYear() - 3,
-      })
-    );
-    await setEmployeeDetailsAPI(
-      apiContext,
-      EmployeePage.buildDefaultEmployeeDetails()
-    );
+    await setupUserToDashboard(apiContext, timestamp);
+
     let opsBrowser = await webkit.launch({
       headless: headless,
       slowMo: 120,
@@ -110,8 +101,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     opsCompanyPage = new OpsCompanyPage(opsPage);
     await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
     await opsCompanyPage.createPromissoryNote({
-      amount:
-        generateRandomNumber(1, 25) * 1000000 + Number(companyInfo.companyId),
+      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
     });
     await opsCompanyPage.enableTreasuryManagment(newUser.email);
     await page.goto(baseURL!);

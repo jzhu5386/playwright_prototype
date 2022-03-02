@@ -18,6 +18,7 @@ import {
   setCompanyDetailAPI,
   setEmployeeDetailsAPI,
   setPayrollConnectionAPI,
+  setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
 import {
   getTokenByGivenTestSession,
@@ -85,18 +86,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
       },
     });
 
-    await setPayrollConnectionAPI(apiContext, "Gusto");
-    await setCompanyDetailAPI(
-      apiContext,
-      CompanyDetailPage.buildDefaultCompanyDetail({
-        timestamp: timestamp,
-        yearofIncorporation: getCurrentYear() - 3,
-      })
-    );
-    await setEmployeeDetailsAPI(
-      apiContext,
-      EmployeePage.buildDefaultEmployeeDetails()
-    );
+    await setupUserToDashboard(apiContext, timestamp);
 
     let opsBrowser = await firefox.launch({
       headless: headless,
@@ -113,9 +103,11 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await opsPage.goto(url);
     opsCompanyPage = new OpsCompanyPage(opsPage);
     await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
+    if (companyInfo.companyId.length === 0) {
+      companyInfo.companyId = companyId;
+    }
     promissoryAmount = await opsCompanyPage.createPromissoryNote({
-      amount:
-        generateRandomNumber(1, 25) * 1000000 + Number(companyInfo.companyId),
+      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
     });
     await opsCompanyPage.enableTreasuryManagment(newUser.email);
 
@@ -155,28 +147,27 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await alloyPage.logInAlloy();
     await alloyPage.approveDocs(tmCompanyInfo.legalName);
 
-    // TODO: it was taking a bit for the email to be sent, waitig on the fix
-    // let q: string = `subject: You're Approved!, to: ${newUser.email}`;
-    // let verifyLink: string = await getHrefLinkValue(
-    //   "qamainstreet@gmail.com",
-    //   q,
-    //   'a[href*="reasury-management"]'
-    // );
-    // await page.goto(verifyLink);
-
-    //await tmPage.approveCreditForUser();
     // this is where we need to manually approve all docs uploaded
     await opsCompanyPage.updateKYCStatusforCompany();
-    // await page.goto(verifyLink);
     await tmPage.reviewDocuments();
     await tmPage.completeDocSign(timestamp);
     await tmPage.validateWireTransferInstruction();
 
+    // this You're approved email appears to be only showing up after user had activated the account
+    let q: string = `subject: You're Approved!, to: ${newUser.email}`;
+    let verifyLink: string = await getHrefLinkValue(
+      "qamainstreet@gmail.com",
+      q,
+      'a[href*="reasury-management"]'
+    );
+    await page.goto(verifyLink);
+
     // TODO: modern treasury is no longer auto-reconciling on sandbox, so need to
     // further investigate how to work this one out
     await transferFunds(promissoryAmount);
-    let q = `subject: Hi, yields! to: ${newUser.email} "${newUser.firstName}"`;
-    let verifyLink = await getHrefLinkValue(
+    await page.waitForTimeout(60000);
+    q = `subject: Hi, yields! to: ${newUser.email} "${newUser.firstName}"`;
+    verifyLink = await getHrefLinkValue(
       "qamainstreet@gmail.com",
       q,
       'a[href*="reasury-management"]'

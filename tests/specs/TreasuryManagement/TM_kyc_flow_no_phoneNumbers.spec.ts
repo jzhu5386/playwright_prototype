@@ -9,6 +9,7 @@ import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
 import { DashboardPage } from "../../pages/DashboardPage";
 import {
+  CompanyOwner,
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
@@ -18,6 +19,7 @@ import {
   setCompanyDetailAPI,
   setEmployeeDetailsAPI,
   setPayrollConnectionAPI,
+  setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
 import {
   getTokenByGivenTestSession,
@@ -86,18 +88,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
       },
     });
 
-    await setPayrollConnectionAPI(apiContext, "Gusto");
-    await setCompanyDetailAPI(
-      apiContext,
-      CompanyDetailPage.buildDefaultCompanyDetail({
-        timestamp: timestamp,
-        yearofIncorporation: getCurrentYear() - 3,
-      })
-    );
-    await setEmployeeDetailsAPI(
-      apiContext,
-      EmployeePage.buildDefaultEmployeeDetails()
-    );
+    await setupUserToDashboard(apiContext, timestamp);
 
     let opsBrowser = await firefox.launch({
       headless: headless,
@@ -115,8 +106,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     opsCompanyPage = new OpsCompanyPage(opsPage);
     await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
     promissoryAmount = await opsCompanyPage.createPromissoryNote({
-      amount:
-        generateRandomNumber(1, 25) * 1000000 + Number(companyInfo.companyId),
+      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
     });
     await opsCompanyPage.enableTreasuryManagment(newUser.email);
 
@@ -166,9 +156,10 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
       errMsg: "Please fill out missing personal information: phone number",
     });
 
-    await tmPage.completeBeneficialOnwerForm({
-      timestamp: timestamp,
-    });
+    let companyOwners: CompanyOwner[] =
+      await tmPage.completeBeneficialOnwerForm({
+        timestamp: timestamp,
+      });
     await tmPage.certifyAndSubmitBeneficialOnwerForm();
     await tmPage.returnToDashBoardAfterSubmission();
 

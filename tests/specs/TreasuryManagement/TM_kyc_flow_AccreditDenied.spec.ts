@@ -9,6 +9,7 @@ import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
 import { DashboardPage } from "../../pages/DashboardPage";
 import {
+  CompanyOwner,
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
@@ -38,6 +39,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let companyInfo: CompanyTokenInfo;
   let alloyPage: AlloyPage;
   let tmCompanyInfo: TMCompanyInfo;
+  let companyOwnerInfo: CompanyOwner[];
 
   const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -90,8 +92,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     opsCompanyPage = new OpsCompanyPage(opsPage);
     await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
     await opsCompanyPage.createPromissoryNote({
-      amount:
-        generateRandomNumber(1, 25) * 1000000 + Number(companyInfo.companyId),
+      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
     });
     await opsCompanyPage.enableTreasuryManagment(newUser.email);
     await page.goto(baseURL!);
@@ -118,10 +119,11 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await tmPage.submitCompanyForm();
     await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
     await tmPage.proceedToContinue();
-    await tmPage.completeBeneficialOnwerForm({
+    companyOwnerInfo = await tmPage.completeBeneficialOnwerForm({
       timestamp: timestamp,
     });
     await tmPage.certifyAndSubmitBeneficialOnwerForm();
+    await tmPage.validateCompanyOwnerSummary(companyOwnerInfo);
     await tmPage.returnToDashBoardAfterSubmission();
 
     await alloyPage.logInAlloy();

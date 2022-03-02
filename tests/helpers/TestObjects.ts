@@ -246,7 +246,7 @@ export interface TMCompanyInfo {
   country: string;
 }
 
-export interface BeneficiaralOwner {
+export interface CompanyOwner {
   firstName: string;
   lastName: string;
   ssn: string;

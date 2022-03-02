@@ -6,7 +6,7 @@ import {
   Page,
 } from "@playwright/test";
 import path from "path";
-import { BeneficiaralOwner, TMCompanyInfo } from "../helpers/TestObjects";
+import { CompanyOwner, TMCompanyInfo } from "../helpers/TestObjects";
 import {
   convertCurrencyStringToNumber,
   generateRandomHumanNames,
@@ -150,11 +150,11 @@ export class TMPage extends CommonOperations {
     timestamp?: number,
     denied?: boolean,
     phone?: boolean
-  ): BeneficiaralOwner[] {
-    let beneficialOnwers: Array<BeneficiaralOwner> = [];
+  ): CompanyOwner[] {
+    let beneficialOnwers: Array<CompanyOwner> = [];
     // count = denied || !phone ? 1 : count;
     for (let i = 0; i < count; i++) {
-      let _default: BeneficiaralOwner = {
+      let _default: CompanyOwner = {
         firstName:
           denied === undefined || !denied ? generateRandomHumanNames() : "Jane",
         lastName:
@@ -302,12 +302,12 @@ export class TMPage extends CommonOperations {
   }
 
   async completeBeneficialOnwerForm(options?: {
-    beneficials?: BeneficiaralOwner[];
+    beneficials?: CompanyOwner[];
     timestamp?: number;
     denied?: boolean;
     phone?: boolean;
     errMsg?: string;
-  }) {
+  }): Promise<CompanyOwner[]> {
     let beneficials =
       options?.beneficials === undefined
         ? TMPage.buildDefaultTMBeneficialOwners(
@@ -321,7 +321,7 @@ export class TMPage extends CommonOperations {
           )
         : options.beneficials;
     for (let i = 0; i < beneficials.length; i++) {
-      let beneficialOwner: BeneficiaralOwner = beneficials[i];
+      let beneficialOwner: CompanyOwner = beneficials[i];
       if (i > 0) {
         await this.addMoreBeneficialOnwerButton.click();
       }
@@ -355,6 +355,11 @@ export class TMPage extends CommonOperations {
         break;
       }
     }
+    return beneficials;
+  }
+
+  async validateCompanyOwnerSummary(companyOwners: CompanyOwner[]) {
+    console.log("hello");
   }
 
   async returnToDashBoardAfterSubmission() {
