@@ -48,6 +48,22 @@ drwxr-xr-x  6 yunzhun  staff   192B Mar  1 21:51 ../
 -rw-r--r--  1 yunzhun  staff   206B Feb 19 11:06 qa_target_audience.json
 ```
 
+## Sample commandlines:
+### To run all tests with in Treasury management folder:
+```sh
+yarn test_treasury_management
+```
+
+### To run a single test:
+```sh
+npx playwright test tests/specs/TreasuryManagement/TM_kyc_flow_KYCreview.spec.ts
+```
+
+### To run test in debug mode:
+```sh
+npx playwright test tests/specs/TreasuryManagement/TM_kyc_flow_KYCreview.spec.ts --debug
+```
+
 ## Here's a basic run down of how file are organized:
 ```sh
 tests/
