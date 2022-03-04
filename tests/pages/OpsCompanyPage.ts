@@ -1,6 +1,5 @@
 import { expect, Locator, Page } from "@playwright/test";
-import { CompanyTokenInfo } from "../helpers/TestObjects";
-import { setupOpsLoginByPass } from "../helpers/TokenHelpers";
+import { CompanyTokenInfo, User } from "../helpers/TestObjects";
 import { generateRandomNumber } from "../helpers/Utils";
 import { CommonOperations } from "./CommonOperations";
 
@@ -58,6 +57,7 @@ export class OpsCompanyPage extends CommonOperations {
       'div[class*="MuiTypography-h2"]:text-is("KYC Applications Table")'
     );
   }
+
   async navigateToCompanyDetailPage(searchKey: string) {
     await this.company.waitFor();
     await this.company.click();
@@ -69,7 +69,6 @@ export class OpsCompanyPage extends CommonOperations {
     await this.searchInput.fill(searchKey);
     await this.opsPage.waitForTimeout(1000);
     await this.companyCell.first().click();
-    this;
   }
 
   async enableTreasuryManagment(companyName: string) {
@@ -137,5 +136,24 @@ export class OpsCompanyPage extends CommonOperations {
       retry--;
     }
     expect(found_status).toEqual(status);
+  }
+
+  /**
+   * wrapper method, given a user, and companyID, navigate to the KYC applicaation, create
+   * promissory note and enable treasury management
+   * @param newUser
+   * @param companyId
+   * @returns
+   */
+  async setUserUpForTM(newUser: User, companyId: string): Promise<number> {
+    let promissoryAmount = 0;
+    await this.page.waitForTimeout(1000);
+    await this.navigateToCompanyDetailPage(newUser.email);
+    await this.page.waitForTimeout(1000);
+    promissoryAmount = await this.createPromissoryNote({
+      amount: generateRandomNumber(1, 15) * 1000000 + Number(companyId),
+    });
+    await this.enableTreasuryManagment(newUser.email);
+    return promissoryAmount;
   }
 }

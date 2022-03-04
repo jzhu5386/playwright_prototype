@@ -15,28 +15,19 @@ import {
 } from "../../helpers/TestObjects";
 import {
   createNewUserAPI,
-  handleQualificationQuestionSets,
-  irsTestPartFourAPI,
-  setCompanyDetailAPI,
-  setEmployeeDetailsAPI,
-  setPayrollConnectionAPI,
   setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
 import {
   getTokenByGivenTestSession,
+  getTokenViaServiceAccount,
   setupOpsLoginByPass,
 } from "../../helpers/TokenHelpers";
-import { CompanyDetailPage } from "../../pages/CompanyDetailPage";
-import {
-  generateRandomNumber,
-  getCurrentYear,
-  getTimestamp,
-} from "../../helpers/Utils";
-import { EmployeePage } from "../../pages/EmployeePage";
+import { generateRandomNumber, getTimestamp } from "../../helpers/Utils";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
 import { IntegrationsPage } from "../../pages/IntegrationsPage";
+import { BrowserFactory } from "../../helpers/BrowserFactory";
 
 test.describe.serial(
   "Treasury Management With Existing Plaid Connection:SMOKE",
@@ -52,6 +43,9 @@ test.describe.serial(
     let companyInfo: CompanyTokenInfo;
     let alloyPage: AlloyPage;
     let integrationsPage: IntegrationsPage;
+    let opsURL: string;
+    let opsBrowser: BrowserFactory;
+    let promissoryAmount: number;
 
     const timestamp = getTimestamp();
     let apiContext: APIRequestContext;
@@ -78,6 +72,7 @@ test.describe.serial(
 
       await logIn.logIn(newUser.email, newUser.password);
       companyInfo = await getTokenByGivenTestSession(page);
+
       // const jwtToken = await getTokenViaServiceAccount();
       apiContext = await playwright.request.newContext({
         // All requests we send go to this API endpoint.
@@ -85,29 +80,26 @@ test.describe.serial(
         extraHTTPHeaders: {
           baseURL: baseURL!,
           Authorization: companyInfo.token,
+          // "proxy-authorization": companyInfo.token,
         },
       });
 
       await setupUserToDashboard(apiContext, timestamp);
-
-      let opsBrowser = await webkit.launch({
-        headless: headless,
-        slowMo: 120,
-      });
-      opsContext = await opsBrowser.newContext({
-        viewport: { width: 1460, height: 800 },
-      });
-      opsPage = await opsContext.newPage();
-      let url = "https://ops.staging.mainstreet.com";
-      opsPage = await setupOpsLoginByPass(opsPage, url);
-      await opsPage.goto(url);
-      opsCompanyPage = new OpsCompanyPage(opsPage);
-      await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
-      await opsCompanyPage.createPromissoryNote({
-        amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
-      });
-      await opsCompanyPage.enableTreasuryManagment(newUser.email);
       await page.goto(baseURL!);
+
+      // create a dedicated browser window just for ops tool
+      opsURL = baseURL
+        ? baseURL.replace("dashboard.", "ops.")
+        : "https://ops.staging.mainstreet.com";
+      opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+      await opsBrowser.setupBrowserForOps();
+      opsPage = opsBrowser.page!;
+      await opsPage.goto(opsURL);
+      opsCompanyPage = new OpsCompanyPage(opsPage);
+      promissoryAmount = await opsCompanyPage.setUserUpForTM(
+        newUser,
+        companyId
+      );
 
       let alloyContext = await browser.newContext();
       let alloyPageObject = await alloyContext.newPage();
@@ -116,6 +108,7 @@ test.describe.serial(
 
     test.afterAll(async ({}) => {
       await apiContext.dispose();
+      await opsBrowser.close();
     });
 
     test("With <5M exiting connection, swap out connection with >5M connection and complete flow", async () => {

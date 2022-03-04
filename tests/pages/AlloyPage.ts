@@ -1,4 +1,4 @@
-import { expect, Frame, FrameLocator, Locator, Page } from "@playwright/test";
+import { Page } from "@playwright/test";
 import credentials from "../resources/testAccounts/qa_external_credentials.json";
 
 export class AlloyPage {
@@ -10,6 +10,7 @@ export class AlloyPage {
 
   async logInAlloy() {
     await this.page.goto("https://app.alloy.co/login/");
+    await this.page.waitForSelector("#id_email");
     await this.page.fill("#id_email", credentials.alloy_sandbox.username);
     await this.page.fill("#id_password", credentials.alloy_sandbox.password);
     await this.page.click("#sign-in > button");
@@ -52,6 +53,8 @@ export class AlloyPage {
     await this.page.click('#manual-review-form button[type="submit"]');
     await this.page.click("div.completed-review button");
   }
+
+  async approveUsers() {}
 
   async approveAllDocs() {
     let i = 20;

@@ -3,7 +3,6 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-  firefox,
 } from "@playwright/test";
 import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
@@ -15,31 +14,19 @@ import {
 } from "../../helpers/TestObjects";
 import {
   createNewUserAPI,
-  setCompanyDetailAPI,
-  setEmployeeDetailsAPI,
-  setPayrollConnectionAPI,
   setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
-import {
-  getTokenByGivenTestSession,
-  setupOpsLoginByPass,
-} from "../../helpers/TokenHelpers";
-import { CompanyDetailPage } from "../../pages/CompanyDetailPage";
-import {
-  generateRandomNumber,
-  getCurrentYear,
-  getTimestamp,
-} from "../../helpers/Utils";
-import { EmployeePage } from "../../pages/EmployeePage";
+import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
+import { getTimestamp } from "../../helpers/Utils";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
 import { getHrefLinkValue } from "../../helpers/GmailActions";
 import { transferFunds } from "../../helpers/ExternalAPIHelpers";
+import { BrowserFactory } from "../../helpers/BrowserFactory";
 
 test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let dashboardPage: DashboardPage;
-  let opsContext: BrowserContext;
   let opsPage: Page;
   let tmPage: TMPage;
   let newUser: User;
@@ -48,7 +35,12 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
   let alloyPage: AlloyPage;
+  let alloyContext: BrowserContext;
+  let alloyPageObject: Page;
   let promissoryAmount: number;
+  let opsURL: string;
+  let opsBrowser: BrowserFactory;
+  let companyId: string;
 
   let timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -70,7 +62,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
       prefix: "TMKYCEmails",
       timestamp: timestamp,
     });
-    let companyId = await createNewUserAPI(apiContext, newUser);
+    companyId = await createNewUserAPI(apiContext, newUser);
 
     console.log(newUser.firstName, newUser.lastName);
     await logIn.logIn(newUser.email, newUser.password);
@@ -87,29 +79,18 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     });
 
     await setupUserToDashboard(apiContext, timestamp);
+    await page.goto(baseURL!);
 
-    let opsBrowser = await firefox.launch({
-      headless: headless,
-      slowMo: 120,
-    });
-    opsContext = await opsBrowser.newContext({
-      viewport: { width: 1460, height: 800 },
-    });
-    timestamp = 1645587748;
-
-    opsPage = await opsContext.newPage();
-    let url = "https://ops.staging.mainstreet.com";
-    opsPage = await setupOpsLoginByPass(opsPage, url);
-    await opsPage.goto(url);
+    // create a dedicated browser window just for ops tool
+    opsURL = baseURL
+      ? baseURL.replace("dashboard.", "ops.")
+      : "https://ops.staging.mainstreet.com";
+    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+    await opsBrowser.setupBrowserForOps();
+    opsPage = opsBrowser.page!;
+    await opsPage.goto(opsURL);
     opsCompanyPage = new OpsCompanyPage(opsPage);
-    await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
-    if (companyInfo.companyId.length === 0) {
-      companyInfo.companyId = companyId;
-    }
-    promissoryAmount = await opsCompanyPage.createPromissoryNote({
-      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
-    });
-    await opsCompanyPage.enableTreasuryManagment(newUser.email);
+    promissoryAmount = await opsCompanyPage.setUserUpForTM(newUser, companyId);
 
     const q: string = `subject: MainStreet High Yield: The wait is over - let’s get started!, to: ${newUser.email}`;
     const verifyLink: string = await getHrefLinkValue(
@@ -119,19 +100,19 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     );
     await page.goto(verifyLink);
 
-    let alloyContext = await browser.newContext();
-    let alloyPageObject = await alloyContext.newPage();
+    alloyContext = await browser.newContext();
+    alloyPageObject = await alloyContext.newPage();
     alloyPage = new AlloyPage(alloyPageObject);
   });
 
   test.afterAll(async ({}) => {
-    // await apiContext.dispose();
+    await apiContext.dispose();
+    await opsBrowser.close();
+    await alloyContext.close();
+    await alloyPageObject.close();
   });
 
   test("Check all three client side emails and make sure we can navigate from email link", async () => {
-    // await loginPage.logIn(newUser.email, newUser.password);
-    // await dashboardPage.goto();
-    // await dashboardPage.navigateToTab("Treasury Management");
     await tmPage.kickOffKycFlow();
     let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,

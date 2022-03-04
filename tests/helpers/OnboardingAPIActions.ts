@@ -1,6 +1,7 @@
 import { APIRequestContext, Page, expect } from "@playwright/test";
 import { CompanyDetailPage } from "../pages/CompanyDetailPage";
 import { EmployeePage } from "../pages/EmployeePage";
+import { LoginPage } from "../pages/LoginPage";
 import {
   CompanyDetails,
   CompanyTokenInfo,
@@ -28,7 +29,7 @@ export async function createNewUserAPI(
   expect(response.ok()).toBeTruthy();
   const userInfo = await response.json();
   console.log(
-    `created new user: ${userInfo.data.company.adminEmail}, ${userInfo.data.company.id}, ${userInfo.data.firstName}`
+    `created new user: ${userInfo.data.company.adminEmail}, ${userInfo.data.company.id}, ${newUser.firstName}`
   );
   return userInfo.data.company.id;
 }

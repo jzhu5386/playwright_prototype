@@ -35,13 +35,16 @@ import { EmployeePage } from "../../pages/EmployeePage";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
+import { BrowserFactory } from "../../helpers/BrowserFactory";
 
 test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let loginPage: LoginPage;
   let dashboardPage: DashboardPage;
+  let opsBrowser: BrowserFactory;
+  let opsURL: string;
+  let promissoryAmount: number;
   let alloyContext: BrowserContext;
   let alloyPageObject: Page;
-  let opsContext: BrowserContext;
   let opsPage: Page;
   let tmPage: TMPage;
   let newUser: User;
@@ -86,37 +89,32 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     });
 
     await setupUserToDashboard(apiContext, timestamp);
-
-    let opsBrowser = await webkit.launch({
-      headless: headless,
-      slowMo: 120,
-    });
-    opsContext = await opsBrowser.newContext({
-      viewport: { width: 1460, height: 800 },
-    });
-    opsPage = await opsContext.newPage();
-    let url = "https://ops.staging.mainstreet.com";
-    opsPage = await setupOpsLoginByPass(opsPage, url);
-    await opsPage.goto(url);
-    opsCompanyPage = new OpsCompanyPage(opsPage);
-    await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
-    await opsCompanyPage.createPromissoryNote({
-      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
-    });
-    await opsCompanyPage.enableTreasuryManagment(newUser.email);
     await page.goto(baseURL!);
 
-    // let alloyContext = await browser.newContext();
-    // let alloyPageObject = await alloyContext.newPage();
-    // alloyPage = new AlloyPage(alloyPageObject);
+    // create a dedicated browser window just for ops tool
+    opsURL = baseURL
+      ? baseURL.replace("dashboard.", "ops.")
+      : "https://ops.staging.mainstreet.com";
+    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+    await opsBrowser.setupBrowserForOps();
+    opsPage = opsBrowser.page!;
+    await opsPage.goto(opsURL);
+    opsCompanyPage = new OpsCompanyPage(opsPage);
+    promissoryAmount = await opsCompanyPage.setUserUpForTM(newUser, companyId);
+
+    alloyContext = await browser.newContext();
+    alloyPageObject = await alloyContext.newPage();
+    alloyPage = new AlloyPage(alloyPageObject);
   });
 
   test.afterAll(async ({}) => {
     await apiContext.dispose();
+    await opsBrowser.close();
+    await alloyPageObject.close();
+    await alloyContext.close();
   });
 
   test("Trigger Denied state in KYC and user sees proper message from UI", async () => {
-    // await loginPage.logIn(newUser.email, newUser.password);
     await dashboardPage.goto();
     await dashboardPage.navigateToTab("Treasury Management");
     await tmPage.kickOffKycFlow();
@@ -127,7 +125,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await tmPage.submitCompanyForm();
     await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
     await tmPage.proceedToContinue();
-    await tmPage.completeBeneficialOnwerForm({
+    let companyOwner = await tmPage.completeBeneficialOnwerForm({
       timestamp: timestamp,
       denied: true,
     });
@@ -136,5 +134,9 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
 
     await opsCompanyPage.updateKYCStatusforCompany("rejected");
     await tmPage.validateKYCverificationFailed();
+
+    await alloyPage.logInAlloy();
+    await alloyPage.approveDocs(tmCompanyInfo.legalName);
+    // await alloyPage.approveUser(companyOwner);
   });
 });

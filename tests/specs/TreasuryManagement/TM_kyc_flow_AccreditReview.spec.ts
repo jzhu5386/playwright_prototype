@@ -3,7 +3,6 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-  webkit,
 } from "@playwright/test";
 import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
@@ -15,29 +14,18 @@ import {
 } from "../../helpers/TestObjects";
 import {
   createNewUserAPI,
-  setCompanyDetailAPI,
-  setEmployeeDetailsAPI,
-  setPayrollConnectionAPI,
+  setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
-import {
-  getTokenByGivenTestSession,
-  getTokenViaServiceAccount,
-  setupOpsLoginByPass,
-} from "../../helpers/TokenHelpers";
-import { CompanyDetailPage } from "../../pages/CompanyDetailPage";
-import {
-  generateRandomNumber,
-  getCurrentYear,
-  getTimestamp,
-} from "../../helpers/Utils";
-import { EmployeePage } from "../../pages/EmployeePage";
+import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
+import { getTimestamp } from "../../helpers/Utils";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
+import { BrowserFactory } from "../../helpers/BrowserFactory";
 
 test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let dashboardPage: DashboardPage;
-  let opsContext: BrowserContext;
+  let companyId: string;
   let opsPage: Page;
   let tmPage: TMPage;
   let newUser: User;
@@ -46,6 +34,10 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
   let alloyPage: AlloyPage;
+  let alloyContext: BrowserContext;
+  let alloyPageObject: Page;
+  let opsBrowser: BrowserFactory;
+  let opsURL: string;
 
   const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -67,7 +59,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
       prefix: "TMAccredReview",
       timestamp: timestamp,
     });
-    let companyId = await createNewUserAPI(apiContext, newUser);
+    companyId = await createNewUserAPI(apiContext, newUser);
 
     await logIn.logIn(newUser.email, newUser.password);
     companyInfo = await getTokenByGivenTestSession(page);
@@ -81,44 +73,31 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
       },
     });
 
-    await setPayrollConnectionAPI(apiContext, "Gusto");
-    await setCompanyDetailAPI(
-      apiContext,
-      CompanyDetailPage.buildDefaultCompanyDetail({
-        timestamp: timestamp,
-        yearofIncorporation: getCurrentYear() - 3,
-      })
-    );
-    await setEmployeeDetailsAPI(
-      apiContext,
-      EmployeePage.buildDefaultEmployeeDetails()
-    );
-    let opsBrowser = await webkit.launch({
-      headless: headless,
-      slowMo: 120,
-    });
-    opsContext = await opsBrowser.newContext({
-      viewport: { width: 1460, height: 800 },
-    });
-    opsPage = await opsContext.newPage();
-    let url = "https://ops.staging.mainstreet.com";
-    opsPage = await setupOpsLoginByPass(opsPage, url);
-    await opsPage.goto(url);
-    opsCompanyPage = new OpsCompanyPage(opsPage);
-    await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
-    await opsCompanyPage.createPromissoryNote({
-      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
-    });
-    await opsCompanyPage.enableTreasuryManagment(newUser.email);
+    await setupUserToDashboard(apiContext, timestamp);
     await page.goto(baseURL!);
 
-    let alloyContext = await browser.newContext();
-    let alloyPageObject = await alloyContext.newPage();
+    // create a dedicated browser window just for ops tool
+    opsURL = baseURL
+      ? baseURL.replace("dashboard.", "ops.")
+      : "https://ops.staging.mainstreet.com";
+    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+    await opsBrowser.setupBrowserForOps();
+    opsPage = opsBrowser.page!;
+    await opsPage.goto(opsURL);
+    opsCompanyPage = new OpsCompanyPage(opsPage);
+    await opsCompanyPage.setUserUpForTM(newUser, companyId);
+
+    alloyContext = await browser.newContext();
+    alloyPageObject = await alloyContext.newPage();
     alloyPage = new AlloyPage(alloyPageObject);
+    alloyPage.logInAlloy();
   });
 
   test.afterAll(async ({}) => {
     await apiContext.dispose();
+    await opsBrowser.close();
+    await alloyContext.close();
+    await alloyPageObject.close();
   });
 
   test("from alloy set user to in_review state and verify user sees proper message on UI", async () => {
@@ -139,7 +118,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await tmPage.certifyAndSubmitBeneficialOnwerForm();
     await tmPage.returnToDashBoardAfterSubmission();
 
-    await alloyPage.logInAlloy();
+    // await alloyPage.logInAlloy();
     await alloyPage.approveDocs(tmCompanyInfo.legalName, "review");
     // await tmPage.approveCreditForUser();
     // this is where we need to manually approve all docs uploaded

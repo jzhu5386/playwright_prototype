@@ -17,14 +17,15 @@ import {
   setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
 import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
-import { getTimestamp } from "../../helpers/Utils";
+import { generateRandomNumber, getTimestamp } from "../../helpers/Utils";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
+import { AlloyPage } from "../../pages/AlloyPage";
 import { BrowserFactory } from "../../helpers/BrowserFactory";
 
 test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let dashboardPage: DashboardPage;
-  let opsContext: BrowserContext;
+  let companyId: string;
   let opsPage: Page;
   let tmPage: TMPage;
   let newUser: User;
@@ -32,9 +33,9 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let context: BrowserContext;
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
+  let alloyPage: AlloyPage;
   let opsBrowser: BrowserFactory;
   let opsURL: string;
-  let promissoryAmount: number;
 
   const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -53,14 +54,13 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     });
 
     newUser = accountsPage.buildDefaultUserInfo({
-      prefix: "TMCompanyInfoONLY",
+      prefix: "TMAccredReview",
       timestamp: timestamp,
     });
-    let companyId = await createNewUserAPI(apiContext, newUser);
+    companyId = await createNewUserAPI(apiContext, newUser);
 
     await logIn.logIn(newUser.email, newUser.password);
     companyInfo = await getTokenByGivenTestSession(page);
-    // const jwtToken = await getTokenViaServiceAccount();
     apiContext = await playwright.request.newContext({
       // All requests we send go to this API endpoint.
       baseURL: baseURL,
@@ -82,11 +82,15 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     opsPage = opsBrowser.page!;
     await opsPage.goto(opsURL);
     opsCompanyPage = new OpsCompanyPage(opsPage);
-    promissoryAmount = await opsCompanyPage.setUserUpForTM(newUser, companyId);
+    let promissoryAmount = await opsCompanyPage.setUserUpForTM(
+      newUser,
+      companyId
+    );
 
-    // let alloyContext = await browser.newContext();
-    // let alloyPageObject = await alloyContext.newPage();
-    // alloyPage = new AlloyPage(alloyPageObject);
+    // create a new window from default browser provided by playwright for alloy interaction
+    let alloyContext = await browser.newContext();
+    let alloyPageObject = await alloyContext.newPage();
+    alloyPage = new AlloyPage(alloyPageObject);
   });
 
   test.afterAll(async ({}) => {
@@ -94,34 +98,30 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await opsBrowser.close();
   });
 
-  test("only submit company info form, whhich puts user in KYC in review state, make sure we can return and continue", async () => {
-    // await loginPage.logIn(newUser.email, newUser.password);
+  test("trigger in review state for individual, business and make sure to review all and that we can continue", async () => {
     await dashboardPage.goto();
     await dashboardPage.navigateToTab("Treasury Management");
     await tmPage.kickOffKycFlow();
     let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
+      review: true,
     });
     await tmPage.uploadAccreditationDocuments();
     await tmPage.submitCompanyForm();
     await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
     await tmPage.proceedToContinue();
+    await tmPage.completeBeneficialOnwerForm({
+      timestamp: timestamp,
+      review: true,
+    });
+    await tmPage.certifyAndSubmitBeneficialOnwerForm();
+    await tmPage.returnToDashBoardAfterSubmission();
 
-    // this definitely takes abit to take affect to save copmpany info, so waiting for 5s in
-    // this loading method
-    await tmPage.loadingCompanyOwnerForm();
-
-    await tmPage.exitTMVerificationFlow();
-    // await dashboardPage.navigateToTab("Treasury Management");
-    // await page.reload();
-    // // check that we still see the start verification button and user can enter
-    // // company owner information afterwards
-    // await tmPage.kickOffKycFlow();
-    // await tmPage.completeBeneficialOnwerForm({
-    //   timestamp: timestamp,
-    //   denied: true,
-    // });
-
+    await alloyPage.logInAlloy();
+    await alloyPage.approveDocs(tmCompanyInfo.legalName, "review");
+    // await tmPage.approveCreditForUser();
+    // this is where we need to manually approve all docs uploaded
     await opsCompanyPage.updateKYCStatusforCompany("in_review");
+    await tmPage.validateAccedReviewState();
   });
 });

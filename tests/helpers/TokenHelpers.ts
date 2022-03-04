@@ -4,7 +4,7 @@ import targetInfo from "../resources/testAccounts/qa_target_audience.json";
 import path from "path";
 import { GoogleAuth } from "googleapis-common";
 import axios from "axios";
-import { CompanyTokenInfo } from "./TestObjects";
+import { CompanyTokenInfo, User } from "./TestObjects";
 import { getHostURL } from "./Utils";
 
 /**

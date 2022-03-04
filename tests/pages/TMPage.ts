@@ -125,7 +125,8 @@ export class TMPage extends CommonOperations {
 
   static buildDefaultTMCompanyInfo(
     timestamp?: number,
-    phone?: boolean
+    phone?: boolean,
+    review?: boolean
   ): TMCompanyInfo {
     timestamp = timestamp === undefined ? getTimestamp() : timestamp;
     const tmCompanyInfo: TMCompanyInfo = {
@@ -134,7 +135,10 @@ export class TMPage extends CommonOperations {
         phone === undefined || phone
           ? generateRandomNumber(1111111111, 9999999999).toString()
           : "",
-      EIN: generateRandomNumber(111111111, 999999999).toString(),
+      EIN:
+        review === undefined || review
+          ? generateRandomNumber(111111111, 999999999).toString()
+          : "123456789",
       street: `QA testing street ${timestamp}`,
       city: "QA city",
       apt: "9",
@@ -149,16 +153,22 @@ export class TMPage extends CommonOperations {
     count: number = 1,
     timestamp?: number,
     denied?: boolean,
-    phone?: boolean
+    phone?: boolean,
+    review?: boolean
   ): CompanyOwner[] {
     let beneficialOnwers: Array<CompanyOwner> = [];
+    let lastName = generateRandomHumanNames();
     // count = denied || !phone ? 1 : count;
+    if (denied !== undefined && denied) {
+      lastName = "DENY";
+    } else if (review !== undefined && review) {
+      lastName = "REVIEW";
+    }
     for (let i = 0; i < count; i++) {
       let _default: CompanyOwner = {
         firstName:
           denied === undefined || !denied ? generateRandomHumanNames() : "Jane",
-        lastName:
-          denied === undefined || !denied ? generateRandomHumanNames() : "DENY",
+        lastName: lastName,
         ssn:
           denied === undefined || !denied
             ? generateRandomNumber(111111112, 999999999).toString()
@@ -194,10 +204,15 @@ export class TMPage extends CommonOperations {
     timestamp?: number;
     tmCompanyInfo?: TMCompanyInfo;
     phone?: boolean;
+    review?: boolean;
   }): Promise<TMCompanyInfo> {
     let tmCompanyInfo =
       options?.tmCompanyInfo === undefined
-        ? TMPage.buildDefaultTMCompanyInfo(options?.timestamp, options?.phone)
+        ? TMPage.buildDefaultTMCompanyInfo(
+            options?.timestamp,
+            options?.phone,
+            options?.review
+          )
         : options.tmCompanyInfo;
 
     await this.legalNameInput.fill(tmCompanyInfo.legalName);
@@ -306,6 +321,7 @@ export class TMPage extends CommonOperations {
     timestamp?: number;
     denied?: boolean;
     phone?: boolean;
+    review?: boolean;
     errMsg?: string;
   }): Promise<CompanyOwner[]> {
     let beneficials =
@@ -317,7 +333,8 @@ export class TMPage extends CommonOperations {
               : 1,
             options?.timestamp,
             options?.denied,
-            options?.phone
+            options?.phone,
+            options?.review
           )
         : options.beneficials;
     for (let i = 0; i < beneficials.length; i++) {
@@ -359,7 +376,8 @@ export class TMPage extends CommonOperations {
   }
 
   async validateCompanyOwnerSummary(companyOwners: CompanyOwner[]) {
-    console.log("hello");
+    // TODO
+    console.log("need to check for company ownser summary");
   }
 
   async returnToDashBoardAfterSubmission() {

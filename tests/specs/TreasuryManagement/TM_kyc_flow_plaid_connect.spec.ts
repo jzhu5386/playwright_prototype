@@ -3,7 +3,6 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-  webkit,
 } from "@playwright/test";
 import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
@@ -15,25 +14,14 @@ import {
 } from "../../helpers/TestObjects";
 import {
   createNewUserAPI,
-  setCompanyDetailAPI,
-  setEmployeeDetailsAPI,
-  setPayrollConnectionAPI,
   setupUserToDashboard,
 } from "../../helpers/OnboardingAPIActions";
-import {
-  getTokenByGivenTestSession,
-  setupOpsLoginByPass,
-} from "../../helpers/TokenHelpers";
-import { CompanyDetailPage } from "../../pages/CompanyDetailPage";
-import {
-  generateRandomNumber,
-  getCurrentYear,
-  getTimestamp,
-} from "../../helpers/Utils";
-import { EmployeePage } from "../../pages/EmployeePage";
+import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
+import { getTimestamp } from "../../helpers/Utils";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
+import { BrowserFactory } from "../../helpers/BrowserFactory";
 
 test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let dashboardPage: DashboardPage;
@@ -46,6 +34,8 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
   let alloyPage: AlloyPage;
+  let opsBrowser: BrowserFactory;
+  let opsURL: string;
 
   const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -82,25 +72,21 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     });
 
     await setupUserToDashboard(apiContext, timestamp);
-
-    let opsBrowser = await webkit.launch({
-      headless: headless,
-      slowMo: 120,
-    });
-    opsContext = await opsBrowser.newContext({
-      viewport: { width: 1460, height: 800 },
-    });
-    opsPage = await opsContext.newPage();
-    let url = "https://ops.staging.mainstreet.com";
-    opsPage = await setupOpsLoginByPass(opsPage, url);
-    await opsPage.goto(url);
-    opsCompanyPage = new OpsCompanyPage(opsPage);
-    await opsCompanyPage.navigateToCompanyDetailPage(newUser.email);
-    await opsCompanyPage.createPromissoryNote({
-      amount: generateRandomNumber(1, 25) * 1000000 + Number(companyId),
-    });
-    await opsCompanyPage.enableTreasuryManagment(newUser.email);
     await page.goto(baseURL!);
+
+    // create a dedicated browser window just for ops tool
+    opsURL = baseURL
+      ? baseURL.replace("dashboard.", "ops.")
+      : "https://ops.staging.mainstreet.com";
+    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+    await opsBrowser.setupBrowserForOps();
+    opsPage = opsBrowser.page!;
+    await opsPage.goto(opsURL);
+    opsCompanyPage = new OpsCompanyPage(opsPage);
+    let promissoryAmount = await opsCompanyPage.setUserUpForTM(
+      newUser,
+      companyId
+    );
 
     let alloyContext = await browser.newContext();
     let alloyPageObject = await alloyContext.newPage();
@@ -109,6 +95,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
 
   test.afterAll(async ({}) => {
     await apiContext.dispose();
+    await opsBrowser.close();
   });
 
   test("without plaid connection, connect to plaid and see successful state and complete flow", async () => {
