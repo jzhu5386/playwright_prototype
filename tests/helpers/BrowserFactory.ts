@@ -9,9 +9,9 @@ import {
 import { setupOpsLoginByPass } from "./TokenHelpers";
 
 export class BrowserFactory {
-  browser?: Browser;
-  browserContext?: BrowserContext;
-  page?: Page;
+  browser!: Browser;
+  browserContext!: BrowserContext;
+  page!: Page;
   browserType: "webkit" | "firefox" | "chromium" = "chromium";
   targetURL: string;
   headless: boolean;

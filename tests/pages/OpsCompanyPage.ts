@@ -67,7 +67,8 @@ export class OpsCompanyPage extends CommonOperations {
     await this.searchButton.click();
     await this.searchInput.waitFor();
     await this.searchInput.fill(searchKey);
-    await this.opsPage.waitForTimeout(1000);
+    await this.opsPage.waitForTimeout(2000);
+    expect(await this.companyCell.count()).toEqual(1);
     await this.companyCell.first().click();
   }
 
@@ -94,7 +95,7 @@ export class OpsCompanyPage extends CommonOperations {
       options?.config === undefined
         ? "MainStreet Yield LLC, Promissory Note 1"
         : options.config;
-    await this.page.waitForTimeout(3000);
+    await this.page.waitForTimeout(2000);
     await this.viewTreasuryManagementLink.click();
     await this.createPromissoryNoteButton.click();
     await this.promissoryNoteAmmountInput.fill(amount.toString());

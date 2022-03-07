@@ -22,13 +22,11 @@ import { getTimestamp } from "../../helpers/Utils";
 import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
-import { getHrefLinkValue } from "../../helpers/GmailActions";
-import { transferFunds } from "../../helpers/ExternalAPIHelpers";
 import { BrowserFactory } from "../../helpers/BrowserFactory";
 
-test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
+test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let dashboardPage: DashboardPage;
-  let opsContext: BrowserContext;
+  let companyId: string;
   let opsPage: Page;
   let tmPage: TMPage;
   let newUser: User;
@@ -37,11 +35,11 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
   let alloyPage: AlloyPage;
-  let promissoryAmount: number;
   let opsBrowser: BrowserFactory;
   let opsURL: string;
+  let companyOwner: CompanyOwner[];
 
-  let timestamp = getTimestamp();
+  const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
 
   test.beforeAll(async ({ playwright, browser, baseURL, headless }) => {
@@ -58,17 +56,13 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     });
 
     newUser = accountsPage.buildDefaultUserInfo({
-      prefix: "TMKYCEmails",
+      prefix: "TMAccredReview",
       timestamp: timestamp,
     });
-    let companyId = await createNewUserAPI(apiContext, newUser);
+    companyId = await createNewUserAPI(apiContext, newUser);
 
     await logIn.logIn(newUser.email, newUser.password);
-
     companyInfo = await getTokenByGivenTestSession(page);
-    companyInfo.companyId =
-      companyInfo.companyId.length === 0 ? companyId : companyInfo.companyId;
-    // const jwtToken = await getTokenViaServiceAccount();
     apiContext = await playwright.request.newContext({
       // All requests we send go to this API endpoint.
       baseURL: baseURL,
@@ -90,16 +84,12 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     opsPage = opsBrowser.page!;
     await opsPage.goto(opsURL);
     opsCompanyPage = new OpsCompanyPage(opsPage);
-    promissoryAmount = await opsCompanyPage.setUserUpForTM(newUser, companyId);
-
-    let q: string = `subject: MainStreet High Yield: The wait is over - let’s get started!, to: ${newUser.email}`;
-    let verifyLink: string = await getHrefLinkValue(
-      "qamainstreet@gmail.com",
-      q,
-      'a[href*="treasury-management"]'
+    let promissoryAmount = await opsCompanyPage.setUserUpForTM(
+      newUser,
+      companyId
     );
-    await page.goto(verifyLink);
 
+    // create a new window from default browser provided by playwright for alloy interaction
     let alloyContext = await browser.newContext();
     let alloyPageObject = await alloyContext.newPage();
     alloyPage = new AlloyPage(alloyPageObject);
@@ -110,71 +100,89 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await opsBrowser.close();
   });
 
-  test("Check all three client side emails and make sure we can navigate from email link", async () => {
+  test("trigger in review state for individual, business and accreditation. Then for each transition from denied to approved and make sure users sees correct state message", async () => {
+    await dashboardPage.goto();
+    await dashboardPage.navigateToTab("Treasury Management");
     await tmPage.kickOffKycFlow();
     let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
-      phone: false,
+      review: true,
     });
     await tmPage.uploadAccreditationDocuments();
-    await tmPage.submitCompanyForm(
-      "Please fill out missing company information: valid phone number, investment accreditation verification"
-    );
-
-    tmCompanyInfo = await tmPage.completKYCCompanyInfoForm({
-      timestamp: timestamp,
-      phone: true,
-    });
     await tmPage.submitCompanyForm();
-
     await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
     await tmPage.proceedToContinue();
-
-    await tmPage.completeBeneficialOnwerForm({
+    companyOwner = await tmPage.completeBeneficialOnwerForm({
       timestamp: timestamp,
-      phone: false,
-      errMsg: "Please fill out missing personal information: phone number",
+      review: true,
     });
-
-    let companyOwners: CompanyOwner[] =
-      await tmPage.completeBeneficialOnwerForm({
-        timestamp: timestamp,
-      });
     await tmPage.certifyAndSubmitBeneficialOnwerForm();
     await tmPage.returnToDashBoardAfterSubmission();
 
     await alloyPage.logInAlloy();
-    await alloyPage.approveDocs(tmCompanyInfo.legalName);
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+      type: "business",
+      status: "deny",
+    });
 
-    // TODO: it was taking a bit for the email to be sent, waitig on the fix
+    // set business entity to denied state and validate user also sees failed state
+    await opsCompanyPage.updateKYCStatusforCompany("rejected");
+    await tmPage.validateKYCverificationFailed();
 
-    //await tmPage.approveCreditForUser();
-    // this is where we need to manually approve all docs uploaded
-    await opsCompanyPage.updateKYCStatusforCompany();
-    // await page.goto(verifyLink);
-    await tmPage.reviewDocuments();
-    await tmPage.completeDocSign(timestamp);
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+      type: "business",
+      status: "approve",
+    });
 
-    let q: string = `subject: You're Approved!, to: ${newUser.email}`;
-    let verifyLink: string = await getHrefLinkValue(
-      "qamainstreet@gmail.com",
-      q,
-      'a[href*="reasury-management"]'
+    // set business entity to approved state and validate user sees in_review state
+    await opsCompanyPage.updateKYCStatusforCompany("in_review");
+    await tmPage.reload();
+    await tmPage.validateCurrentActiveSteper(
+      "Verify your company information and owners"
     );
-    await page.goto(verifyLink);
 
-    await tmPage.validateWireTransferInstruction();
+    // set individual entity to denied state and validate user also sees failed state
+    await alloyPage.approveDocs({
+      entityName: `${companyOwner[0].firstName} ${companyOwner[0].lastName}`,
+      type: "individual",
+      status: "deny",
+    });
+    await opsCompanyPage.updateKYCStatusforCompany("rejected");
+    await tmPage.validateKYCverificationFailed();
 
-    // TODO: modern treasury is no longer auto-reconciling on sandbox, so need to
-    // further investigate how to work this one out
-    // await transferFunds(promissoryAmount);
-    // q = `subject: Hi, yields! to: ${newUser.email} "${newUser.firstName}"`;
-    // verifyLink = await getHrefLinkValue(
-    //   "qamainstreet@gmail.com",
-    //   q,
-    //   'a[href*="reasury-management"]'
-    // );
-    // await page.goto(verifyLink);
-    // await tmPage.validateHighYieldAccountView(promissoryAmount, "Completed");
+    // set individual entity to approved state and validate user sees in_review state
+    await alloyPage.approveDocs({
+      entityName: `${companyOwner[0].firstName} ${companyOwner[0].lastName}`,
+      type: "individual",
+      status: "approve",
+    });
+    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await tmPage.reload();
+    await tmPage.validateCurrentActiveSteper(
+      "Verify your company information and owners"
+    );
+
+    // set accreditation entity to denied state and validate user also sees failed state
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+      type: "accreditation",
+      status: "deny",
+    });
+    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await tmPage.validateKYCverificationFailed();
+
+    // set accreditation entity to approved state and validate user sees approve state
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+      type: "accreditation",
+      status: "approve",
+    });
+    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await tmPage.reload();
+    await tmPage.validateStepIsComplete(
+      "Verify your company information and owners"
+    );
   });
 });

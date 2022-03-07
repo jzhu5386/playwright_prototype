@@ -112,16 +112,18 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await tmPage.loadingCompanyOwnerForm();
 
     await tmPage.exitTMVerificationFlow();
-    // await dashboardPage.navigateToTab("Treasury Management");
-    // await page.reload();
-    // // check that we still see the start verification button and user can enter
-    // // company owner information afterwards
-    // await tmPage.kickOffKycFlow();
-    // await tmPage.completeBeneficialOnwerForm({
-    //   timestamp: timestamp,
-    //   denied: true,
-    // });
-
-    await opsCompanyPage.updateKYCStatusforCompany("in_review");
+    await page.waitForTimeout(2000);
+    await dashboardPage.navigateToTab("Treasury Management");
+    await page.waitForTimeout(2000);
+    // check that we still see the start verification button and user can enter
+    // company owner information afterwards
+    await tmPage.validateCurrentActiveSteper(
+      "Verify your company information and owners"
+    );
+    await tmPage.continueKYCFlow();
+    await tmPage.validateOnCompanyOwnerPage();
+    await tmPage.completeBeneficialOnwerForm({
+      timestamp: timestamp,
+    });
   });
 });

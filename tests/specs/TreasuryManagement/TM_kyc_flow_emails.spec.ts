@@ -7,6 +7,7 @@ import {
 import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
 import { DashboardPage } from "../../pages/DashboardPage";
+import { DocumentsPage } from "../../pages/DocumentsPage";
 import {
   CompanyTokenInfo,
   TMCompanyInfo,
@@ -25,12 +26,13 @@ import { getHrefLinkValue } from "../../helpers/GmailActions";
 import { transferFunds } from "../../helpers/ExternalAPIHelpers";
 import { BrowserFactory } from "../../helpers/BrowserFactory";
 
-test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
+test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let dashboardPage: DashboardPage;
   let opsPage: Page;
   let tmPage: TMPage;
   let newUser: User;
   let page: Page;
+  let docPage: DocumentsPage;
   let context: BrowserContext;
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
@@ -41,6 +43,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let opsURL: string;
   let opsBrowser: BrowserFactory;
   let companyId: string;
+  let tmCompanyInfo: TMCompanyInfo;
 
   let timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -52,6 +55,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     tmPage = new TMPage(context, page);
     let logIn = new LoginPage(page);
     dashboardPage = new DashboardPage(page);
+    docPage = new DocumentsPage(page);
 
     apiContext = await playwright.request.newContext({
       // All requests we send go to this API endpoint.
@@ -92,12 +96,14 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     opsCompanyPage = new OpsCompanyPage(opsPage);
     promissoryAmount = await opsCompanyPage.setUserUpForTM(newUser, companyId);
 
+    // make sure we are gettting the first email from client perspective
     const q: string = `subject: MainStreet High Yield: The wait is over - let’s get started!, to: ${newUser.email}`;
     const verifyLink: string = await getHrefLinkValue(
       "qamainstreet@gmail.com",
       q,
       'a[href*="treasury-management"]'
     );
+    // make sure user can navigate to the form directly from link provided in email
     await page.goto(verifyLink);
 
     alloyContext = await browser.newContext();
@@ -112,12 +118,12 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await alloyPageObject.close();
   });
 
-  test("Check all three client side emails and make sure we can navigate from email link", async () => {
+  test("Check all three client side emails and make sure we can navigate from email link, and expected signed doc appear in documents folder", async () => {
     await tmPage.kickOffKycFlow();
-    let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
+    tmCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
     });
-    await tmPage.uploadAccreditationDocuments();
+    let upLoadedDocs = await tmPage.uploadAccreditationDocuments();
     await tmPage.submitCompanyForm();
     await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
     await tmPage.proceedToContinue();
@@ -126,14 +132,17 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await tmPage.returnToDashBoardAfterSubmission();
 
     await alloyPage.logInAlloy();
-    await alloyPage.approveDocs(tmCompanyInfo.legalName);
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+    });
 
-    // this is where we need to manually approve all docs uploaded
+    // this is where we need to manually approve accreditation docs uploaded
     await opsCompanyPage.updateKYCStatusforCompany();
     await tmPage.reviewDocuments();
     await tmPage.completeDocSign(timestamp);
-    await tmPage.validateWireTransferInstruction();
+  });
 
+  test("Once client completes the form, check that they do get You're approved email and get redirected to ", async () => {
     // this You're approved email appears to be only showing up after user had activated the account
     let q: string = `subject: You're Approved!, to: ${newUser.email}`;
     let verifyLink: string = await getHrefLinkValue(
@@ -141,14 +150,27 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
       q,
       'a[href*="reasury-management"]'
     );
-    await page.goto(verifyLink);
 
+    await page.goto(verifyLink);
+    await tmPage.validateWireTransferInstruction();
+    await dashboardPage.navigateToTab("Documents");
+    let expectedDocs = [
+      "MainStreet Yield LLC - Note Investment.pdf",
+      "Treasury Management Document",
+      "MainStreet Yield LLC - Purchase Agreement.pdf",
+      "Treasury Management Document",
+      "IRS Form W-9.pdf",
+      "Treasury Management Document",
+    ];
+    await docPage.validateFilesInDocumentTab(expectedDocs, `DBA ${timestamp}`);
+  });
+  test("This only works with manual intervention currently. Wire an ammount to MT, then reconcile and confirm we get reci", async () => {
     // TODO: modern treasury is no longer auto-reconciling on sandbox, so need to
     // further investigate how to work this one out
     await transferFunds(promissoryAmount);
-    await page.waitForTimeout(60000);
-    q = `subject: Hi, yields! to: ${newUser.email} "${newUser.firstName}"`;
-    verifyLink = await getHrefLinkValue(
+    // currently you'd have to manually reconcile for this section of test to complete successfully.
+    let q = `subject: Hi, yields! to: ${newUser.email} "${newUser.firstName}"`;
+    let verifyLink = await getHrefLinkValue(
       "qamainstreet@gmail.com",
       q,
       'a[href*="reasury-management"]'

@@ -22,12 +22,14 @@ import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
 import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
 import { BrowserFactory } from "../../helpers/BrowserFactory";
+import { DocumentsPage } from "../../pages/DocumentsPage";
 
-test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
+test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let dashboardPage: DashboardPage;
   let opsContext: BrowserContext;
   let opsPage: Page;
   let tmPage: TMPage;
+  let docPage: DocumentsPage;
   let newUser: User;
   let page: Page;
   let context: BrowserContext;
@@ -45,6 +47,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     page = await context.newPage();
     let accountsPage = new AccountsPage(page);
     tmPage = new TMPage(context, page);
+    docPage = new DocumentsPage(page);
     let logIn = new LoginPage(page);
     dashboardPage = new DashboardPage(page);
 
@@ -115,13 +118,22 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await tmPage.returnToDashBoardAfterSubmission();
 
     await alloyPage.logInAlloy();
-    await alloyPage.approveDocs(tmCompanyInfo.legalName);
+    await alloyPage.approveDocs({ entityName: tmCompanyInfo.legalName });
     // await tmPage.approveCreditForUser();
     // this is where we need to manually approve all docs uploaded
     await opsCompanyPage.updateKYCStatusforCompany();
     await tmPage.reviewDocuments();
     await tmPage.completeDocSign(timestamp);
     await tmPage.validateWireTransferInstruction();
-    // await docPage.validateDownlodFiles();
+    await dashboardPage.navigateToTab("Documents");
+    let expectedDocs = [
+      "MainStreet Yield LLC - Note Investment.pdf",
+      "Treasury Management Document",
+      "MainStreet Yield LLC - Purchase Agreement.pdf",
+      "Treasury Management Document",
+      "IRS Form W-9.pdf",
+      "Treasury Management Document",
+    ];
+    await docPage.validateFilesInDocumentTab(expectedDocs, `DBA ${timestamp}`);
   });
 });

@@ -8,6 +8,7 @@ import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
 import { DashboardPage } from "../../pages/DashboardPage";
 import {
+  CompanyDetails,
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
@@ -38,6 +39,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let alloyPageObject: Page;
   let opsBrowser: BrowserFactory;
   let opsURL: string;
+  let tmCompanyInfo: TMCompanyInfo;
 
   const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -105,7 +107,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await dashboardPage.goto();
     await dashboardPage.navigateToTab("Treasury Management");
     await tmPage.kickOffKycFlow();
-    let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
+    tmCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
     });
     await tmPage.uploadAccreditationDocuments();
@@ -119,10 +121,22 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await tmPage.returnToDashBoardAfterSubmission();
 
     // await alloyPage.logInAlloy();
-    await alloyPage.approveDocs(tmCompanyInfo.legalName, "review");
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+      status: "review",
+    });
     // await tmPage.approveCreditForUser();
     // this is where we need to manually approve all docs uploaded
     await opsCompanyPage.updateKYCStatusforCompany("approved");
     await tmPage.validateAccedReviewState();
+  });
+
+  test("change accreditated status from review to approved and verify user sees first step complete", async () => {
+    await alloyPage.approveDocs({ entityName: tmCompanyInfo.legalName });
+    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await tmPage.reload();
+    await tmPage.validateStepIsComplete(
+      "Verify your company information and owners"
+    );
   });
 });

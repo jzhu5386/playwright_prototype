@@ -253,8 +253,7 @@ export interface CompanyOwner {
   phone: string;
   title?: string;
   birthday: string;
-  ownership: number;
-  citizenship: string;
+  ownership: string;
   email: string;
   street: string;
   apt?: string;

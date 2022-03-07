@@ -36,7 +36,6 @@ export class TMPage extends CommonOperations {
   readonly lastNameInput: Locator;
   readonly birthDayInput: Locator;
   readonly phoneNumberInput: Locator;
-  readonly citizenshipInput: Locator;
   readonly titleInput: Locator;
   readonly ownerPercentageInput: Locator;
   readonly ssnInput: Locator;
@@ -96,9 +95,6 @@ export class TMPage extends CommonOperations {
     this.ownerPercentageInput = this.page.locator(
       'input[aria-label="Ownership percentage"]'
     );
-    this.citizenshipInput = this.page.locator(
-      'input[aria-label="Citizenship"]'
-    );
     this.certify25Higher = this.page.locator(
       'span:text-is("I certify that all individuals who own 25% or more of the company have been included in this application. If there are no such individuals, I certify that this application has been completed with information of a person who has financial control over the company.")'
     );
@@ -136,7 +132,7 @@ export class TMPage extends CommonOperations {
           ? generateRandomNumber(1111111111, 9999999999).toString()
           : "",
       EIN:
-        review === undefined || review
+        review === undefined || !review
           ? generateRandomNumber(111111111, 999999999).toString()
           : "123456789",
       street: `QA testing street ${timestamp}`,
@@ -179,8 +175,7 @@ export class TMPage extends CommonOperations {
             : "",
         title: "Dr",
         birthday: "12211971",
-        ownership: generateRandomNumber(0, 100 / count),
-        citizenship: "United States",
+        ownership: generateRandomNumber(1, 100 / count).toString(),
         email: `qamainstreet+beneficiary${
           timestamp === undefined ? getTimestamp : timestamp
         }@gmail.com`,
@@ -198,6 +193,14 @@ export class TMPage extends CommonOperations {
   async kickOffKycFlow() {
     await this.kycStartButton.click();
     await this.kycStartButton.click();
+  }
+
+  async continueKYCFlow() {
+    await this.kycStartButton.click();
+  }
+
+  async validateOnCompanyOwnerPage() {
+    await this.page.waitForSelector('h1:text("Company owners")');
   }
 
   async completKYCCompanyInfoForm(options?: {
@@ -224,10 +227,22 @@ export class TMPage extends CommonOperations {
     if (tmCompanyInfo.apt !== undefined) {
       await this.aptsInput.fill(tmCompanyInfo.apt);
     }
-    await this.stateInput.click();
-    await this.page.locator(`span:text-is("${tmCompanyInfo.state}")`).click();
-    await this.countryInput.click();
-    await this.page.locator(`span:text-is("${tmCompanyInfo.country}")`).click();
+    if (tmCompanyInfo.state === "") {
+      await this.stateInput.fill("");
+    } else {
+      await this.stateInput.click();
+      await this.page.locator(`span:text-is("${tmCompanyInfo.state}")`).click();
+    }
+
+    if (tmCompanyInfo.country === "") {
+      await this.countryInput.fill("");
+    } else {
+      await this.countryInput.click();
+      await this.page
+        .locator(`span:text-is("${tmCompanyInfo.country}")`)
+        .click();
+    }
+
     return tmCompanyInfo;
   }
 
@@ -288,10 +303,10 @@ export class TMPage extends CommonOperations {
   async submitCompanyForm(errMsg?: string) {
     await this.saveButton.last().click();
     if (errMsg !== undefined) {
-      this.page
-        .locator(`div[class*="Card__content"]:text-is("${errMsg}")`)
+      await this.page
+        .locator(`div[class*="Card__content"]>p:text-is("${errMsg}")`)
         .waitFor();
-      console.log("found leeror");
+      console.log(`found error: ${errMsg}`);
     }
   }
 
@@ -313,11 +328,11 @@ export class TMPage extends CommonOperations {
   async loadingCompanyOwnerForm() {
     await this.page.waitForSelector('h1:text-is("Company owners")');
     // takes a bit for the company info to save on backend
-    await this.page.waitForTimeout(5000);
+    await this.page.waitForTimeout(2000);
   }
 
   async completeBeneficialOnwerForm(options?: {
-    beneficials?: CompanyOwner[];
+    companyOnwers?: CompanyOwner[];
     timestamp?: number;
     denied?: boolean;
     phone?: boolean;
@@ -325,9 +340,10 @@ export class TMPage extends CommonOperations {
     errMsg?: string;
   }): Promise<CompanyOwner[]> {
     let beneficials =
-      options?.beneficials === undefined
+      options?.companyOnwers === undefined
         ? TMPage.buildDefaultTMBeneficialOwners(
             (options?.denied === undefined || !options.denied) &&
+              (options?.review === undefined || !options.review) &&
               (options?.phone === undefined || options.phone)
               ? 2
               : 1,
@@ -336,7 +352,7 @@ export class TMPage extends CommonOperations {
             options?.phone,
             options?.review
           )
-        : options.beneficials;
+        : options.companyOnwers;
     for (let i = 0; i < beneficials.length; i++) {
       let beneficialOwner: CompanyOwner = beneficials[i];
       if (i > 0) {
@@ -345,30 +361,37 @@ export class TMPage extends CommonOperations {
       await this.firstNameInput.fill(beneficialOwner.firstName);
       await this.lastNameInput.fill(beneficialOwner.lastName);
       await this.birthDayInput.fill(beneficialOwner.birthday);
-      await this.citizenshipInput.click();
-      await this.page.click(`span:text-is("${beneficialOwner.citizenship}")`);
       await this.phoneNumberInput.fill(beneficialOwner.phone);
       await this.emailInput.fill(beneficialOwner.email);
       if (beneficialOwner.title !== undefined) {
         await this.titleInput.fill(beneficialOwner.title);
       }
       await this.ssnInput.fill(beneficialOwner.ssn);
-      await this.ownerPercentageInput.fill(
-        beneficialOwner.ownership.toString()
-      );
+      await this.ownerPercentageInput.fill(beneficialOwner.ownership);
       await this.streetInput.fill(beneficialOwner.street);
       if (beneficialOwner.apt !== undefined) {
         await this.aptsInput.fill(beneficialOwner.apt);
       }
       await this.cityInput.fill(beneficialOwner.city);
       await this.zipInput.fill(beneficialOwner.zip);
-      await this.stateInput.click();
-      await this.page.click(`span:text-is("${beneficialOwner.state}")`);
-      await this.countryInput.click();
-      await this.page.click(`span:text-is("${beneficialOwner.country}")`);
+      if (beneficialOwner.state === "") {
+        await this.stateInput.fill("");
+      } else {
+        await this.stateInput.click();
+        await this.page.click(`span:text-is("${beneficialOwner.state}")`);
+      }
+
+      if (beneficialOwner.country === "") {
+        await this.countryInput.fill("");
+      } else {
+        await this.countryInput.click();
+        await this.page.click(`span:text-is("${beneficialOwner.country}")`);
+      }
+
       await this.saveButton.click();
       if (options?.errMsg !== undefined) {
         await this.page.waitForSelector(`p:text-is("${options.errMsg}")`);
+        console.log(`found error: ${options.errMsg}`);
         break;
       }
     }
@@ -423,16 +446,24 @@ export class TMPage extends CommonOperations {
   }
 
   async validateCurrentActiveSteper(step?: string): Promise<string | null> {
-    const activeStep = await this.page
-      .locator('div[class*="Stepper__active"] p[class*="Text__medium"]')
-      .textContent();
+    const stepper = this.page.locator(
+      'div[class*="Stepper__active"] p[class*="Text__medium"]'
+    );
+    await stepper.waitFor();
+    const activeStep = await stepper.textContent();
     if (step !== undefined) {
       expect(activeStep).toEqual(step);
     }
     return activeStep;
   }
 
-  async validateStepIsComplete(step: string) {
+  async validateStepIsComplete(
+    step:
+      | "Verify your company information and owners"
+      | "Review documents"
+      | "Sign documents"
+      | "Account activation"
+  ) {
     await this.page
       .locator(
         `div[class*="Stepper__past"] p[class*="Text__medium"]:has-text("${step}")`
@@ -450,21 +481,25 @@ export class TMPage extends CommonOperations {
       this.context,
       this.page.locator('a:text-is("Private Placement Memorandum")')
     );
+    await this.page.waitForTimeout(1000);
     await newPage.close();
     newPage = await this.openTarget_blankLink(
       this.context,
       this.page.locator('a:text-is("LLC agreement")')
     );
+    await this.page.waitForTimeout(1000);
     await newPage.close();
     newPage = await this.openTarget_blankLink(
       this.context,
       this.page.locator('a:text-is("Note purchasing agreement")')
     );
+    await this.page.waitForTimeout(1000);
     await newPage.close();
     newPage = await this.openTarget_blankLink(
       this.context,
       this.page.locator('a:text-is("Promissory note")')
     );
+    await this.page.waitForTimeout(1000);
     await newPage.close();
 
     let retry = 15;
@@ -490,6 +525,10 @@ export class TMPage extends CommonOperations {
       "Company information or owner verification failed",
       "failed"
     );
+    // we should be seeing a contact link in failure state
+    await this.page
+      .locator('a[href="mailto:yieldteam@mainstreet.com"]')
+      .waitFor();
   }
 
   async waitForStepperState(
@@ -582,5 +621,37 @@ export class TMPage extends CommonOperations {
 
     let transctions = await this.page.locator("tbody>tr>td").allTextContents();
     console.log(transctions);
+  }
+
+  //TODO: refactor, refine calculation checks
+  async calculateInterest() {
+    const initialDate = await this.page
+      .locator("tbody>tr:nth-child(1)>td:nth-child(1)")
+      .textContent();
+    const dateVal = new Date(initialDate!);
+    const currentDate = new Date();
+    const diff = Math.abs(currentDate.getTime() - dateVal.getTime());
+    const dayDiff = Math.ceil(diff / (1000 * 3600 * 24));
+    const initialVal = await this.page
+      .locator("tbody>tr:nth-child(1)>td:nth-child(4)")
+      .textContent();
+    const interest = await this.page
+      .locator('div[class*="Card__container___"] p[class*="Text__medium"]')
+      .last()
+      .textContent();
+    const expectedInterest =
+      dayDiff *
+      (((convertCurrencyStringToNumber(initialVal!) / 365) *
+        Number(interest!.replace("%", ""))) /
+        100);
+    const foundInterest = await this.page
+      .locator('div[class*="Card__container___"] p[class*="Text__medium"]')
+      .first()
+      .textContent();
+    expect(
+      expectedInterest - convertCurrencyStringToNumber(foundInterest!)
+    ).toBeLessThanOrEqual(
+      2 * (convertCurrencyStringToNumber(initialVal!) / 365)
+    );
   }
 }

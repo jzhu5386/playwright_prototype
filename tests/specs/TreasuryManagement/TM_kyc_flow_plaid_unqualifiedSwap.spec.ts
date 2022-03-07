@@ -135,7 +135,7 @@ test.describe.serial(
       // await opsCompanyPage.createPromissoryNote();
 
       await alloyPage.logInAlloy();
-      await alloyPage.approveDocs(tmCompanyInfo.legalName);
+      await alloyPage.approveDocs({ entityName: tmCompanyInfo.legalName });
       // await tmPage.approveCreditForUser();
       // this is where we need to manually approve all docs uploaded
       await opsCompanyPage.updateKYCStatusforCompany();

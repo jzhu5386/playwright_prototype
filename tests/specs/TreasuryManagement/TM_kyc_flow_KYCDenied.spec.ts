@@ -9,6 +9,7 @@ import { LoginPage } from "../../pages/LoginPage";
 import { AccountsPage } from "../../pages/AccountsPage";
 import { DashboardPage } from "../../pages/DashboardPage";
 import {
+  CompanyOwner,
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
@@ -37,7 +38,7 @@ import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
 import { BrowserFactory } from "../../helpers/BrowserFactory";
 
-test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
+test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   let loginPage: LoginPage;
   let dashboardPage: DashboardPage;
   let opsBrowser: BrowserFactory;
@@ -53,6 +54,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
   let opsCompanyPage: OpsCompanyPage;
   let companyInfo: CompanyTokenInfo;
   let alloyPage: AlloyPage;
+  let companyOwner: CompanyOwner[];
 
   const timestamp = getTimestamp();
   let apiContext: APIRequestContext;
@@ -125,7 +127,7 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await tmPage.submitCompanyForm();
     await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
     await tmPage.proceedToContinue();
-    let companyOwner = await tmPage.completeBeneficialOnwerForm({
+    companyOwner = await tmPage.completeBeneficialOnwerForm({
       timestamp: timestamp,
       denied: true,
     });
@@ -136,7 +138,18 @@ test.describe.serial("Treasury Management Flowlabel:SMOKE", () => {
     await tmPage.validateKYCverificationFailed();
 
     await alloyPage.logInAlloy();
-    await alloyPage.approveDocs(tmCompanyInfo.legalName);
-    // await alloyPage.approveUser(companyOwner);
+    await alloyPage.approveDocs({
+      entityName: tmCompanyInfo.legalName,
+    });
+    await alloyPage.approveDocs({
+      entityName: `${companyOwner[0].firstName} ${companyOwner[0].lastName}`,
+      type: "individual",
+    });
+
+    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await tmPage.reload();
+    await tmPage.validateStepIsComplete(
+      "Verify your company information and owners"
+    );
   });
 });

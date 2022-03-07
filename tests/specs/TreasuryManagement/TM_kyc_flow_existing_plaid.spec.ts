@@ -23,9 +23,10 @@ import { TMPage } from "../../pages/TMPage";
 import { AlloyPage } from "../../pages/AlloyPage";
 import { IntegrationsPage } from "../../pages/IntegrationsPage";
 import { BrowserFactory } from "../../helpers/BrowserFactory";
+import { DocumentsPage } from "../../pages/DocumentsPage";
 
 test.describe.serial(
-  "Treasury Management With Existing Plaid Connection:SMOKE",
+  "Treasury Management With Existing Plaid Connection label:SMOKE",
   () => {
     let dashboardPage: DashboardPage;
     let opsContext: BrowserContext;
@@ -43,6 +44,7 @@ test.describe.serial(
     let opsURL: string;
     let opsBrowser: BrowserFactory;
     let promissoryAmount: number;
+    let docPage: DocumentsPage;
 
     const timestamp = getTimestamp();
     let apiContext: APIRequestContext;
@@ -55,6 +57,7 @@ test.describe.serial(
       let logIn = new LoginPage(page);
       dashboardPage = new DashboardPage(page);
       integrationsPage = new IntegrationsPage(page);
+      docPage = new DocumentsPage(page);
 
       apiContext = await playwright.request.newContext({
         // All requests we send go to this API endpoint.
@@ -122,22 +125,39 @@ test.describe.serial(
         }
       );
       // await tmPage.uploadAccreditationDocuments();
+      console.log("submit company form");
       await tmPage.submitCompanyForm();
       await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
       await tmPage.proceedToContinue();
       await tmPage.completeBeneficialOnwerForm({ timestamp: timestamp });
       await tmPage.certifyAndSubmitBeneficialOnwerForm();
       await tmPage.returnToDashBoardAfterSubmission();
+      console.log("returned to dashboard");
 
-      await alloyPage.logInAlloy();
-      await alloyPage.approveDocs(tmCompanyInfo.legalName);
+      // await alloyPage.logInAlloy();
+      // await alloyPage.approveDocs({
+      //   entityName: tmCompanyInfo.legalName,
+      // });
       // await tmPage.approveCreditForUser();
       // this is where we need to manually approve all docs uploaded
       await opsCompanyPage.updateKYCStatusforCompany();
       await tmPage.reviewDocuments();
+      console.log("sign docs");
       await tmPage.completeDocSign(timestamp);
       await tmPage.validateWireTransferInstruction();
-      // await docPage.validateDownlodFiles();
+      await dashboardPage.navigateToTab("Documents");
+      let expectedDocs = [
+        "MainStreet Yield LLC - Note Investment.pdf",
+        "Treasury Management Document",
+        "MainStreet Yield LLC - Purchase Agreement.pdf",
+        "Treasury Management Document",
+        "IRS Form W-9.pdf",
+        "Treasury Management Document",
+      ];
+      await docPage.validateFilesInDocumentTab(
+        expectedDocs,
+        `DBA ${timestamp}`
+      );
     });
   }
 );
