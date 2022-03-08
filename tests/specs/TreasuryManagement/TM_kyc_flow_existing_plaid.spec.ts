@@ -3,33 +3,31 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-} from "@playwright/test";
-import { LoginPage } from "../../pages/LoginPage";
-import { AccountsPage } from "../../pages/AccountsPage";
-import { DashboardPage } from "../../pages/DashboardPage";
+} from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage';
+import { AccountsPage } from '../../pages/AccountsPage';
+import { DashboardPage } from '../../pages/DashboardPage';
 import {
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
-} from "../../helpers/TestObjects";
+} from '../../helpers/TestObjects';
 import {
   createNewUserAPI,
   setupUserToDashboard,
-} from "../../helpers/OnboardingAPIActions";
-import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
-import { getTimestamp } from "../../helpers/Utils";
-import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
-import { TMPage } from "../../pages/TMPage";
-import { AlloyPage } from "../../pages/AlloyPage";
-import { IntegrationsPage } from "../../pages/IntegrationsPage";
-import { BrowserFactory } from "../../helpers/BrowserFactory";
-import { DocumentsPage } from "../../pages/DocumentsPage";
+} from '../../helpers/OnboardingAPIActions';
+import { getTokenByGivenTestSession } from '../../helpers/TokenHelpers';
+import { getTimestamp } from '../../helpers/Utils';
+import { OpsCompanyPage } from '../../pages/OpsCompanyPage';
+import { TMPage } from '../../pages/TMPage';
+import { IntegrationsPage } from '../../pages/IntegrationsPage';
+import { BrowserFactory } from '../../helpers/BrowserFactory';
+import { DocumentsPage } from '../../pages/DocumentsPage';
 
 test.describe.serial(
-  "Treasury Management With Existing Plaid Connection label:SMOKE",
+  'Treasury Management With Existing Plaid Connection label:SMOKE',
   () => {
     let dashboardPage: DashboardPage;
-    let opsContext: BrowserContext;
     let opsPage: Page;
     let tmPage: TMPage;
     let newUser: User;
@@ -37,9 +35,6 @@ test.describe.serial(
     let context: BrowserContext;
     let opsCompanyPage: OpsCompanyPage;
     let companyInfo: CompanyTokenInfo;
-    let alloyPage: AlloyPage;
-    let alloyContext: BrowserContext;
-    let alloyPageObject: Page;
     let integrationsPage: IntegrationsPage;
     let opsURL: string;
     let opsBrowser: BrowserFactory;
@@ -65,7 +60,7 @@ test.describe.serial(
       });
 
       newUser = accountsPage.buildDefaultUserInfo({
-        prefix: "TMPLAID",
+        prefix: 'TMPLAID',
         timestamp: timestamp,
       });
       let companyId = await createNewUserAPI(apiContext, newUser);
@@ -87,21 +82,17 @@ test.describe.serial(
 
       // create a dedicated browser window just for ops tool
       opsURL = baseURL
-        ? baseURL.replace("dashboard.", "ops.")
-        : "https://ops.staging.mainstreet.com";
-      opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+        ? baseURL.replace('dashboard.', 'ops.')
+        : 'https://ops.staging.mainstreet.com';
+      opsBrowser = new BrowserFactory(opsURL, 'webkit', headless!);
       await opsBrowser.setupBrowserForOps();
       opsPage = opsBrowser.page!;
       await opsPage.goto(opsURL);
       opsCompanyPage = new OpsCompanyPage(opsPage);
       promissoryAmount = await opsCompanyPage.setUserUpForTM(
         newUser,
-        companyId
+        companyId,
       );
-
-      alloyContext = await browser.newContext();
-      alloyPageObject = await alloyContext.newPage();
-      alloyPage = new AlloyPage(alloyPageObject);
     });
 
     test.afterAll(async ({}) => {
@@ -109,55 +100,54 @@ test.describe.serial(
       await opsBrowser.close();
       await page.close();
       await context.close();
+      await page.close();
+      await context.close();
     });
 
-    test("Given user is connected with a 5M account, check we see proper connected message and complete flow", async () => {
+    test('Given user is connected with a 5M account, check we see proper connected message and complete flow', async () => {
       // await loginPage.logIn(newUser.email, newUser.password);
       await dashboardPage.goto();
-      await dashboardPage.navigateToTab("Integrations");
-      await integrationsPage.connectToPlaid("plaid_accredited");
+      await dashboardPage.navigateToTab('Integrations');
+      await integrationsPage.connectToPlaid('plaid_accredited');
 
-      await dashboardPage.navigateToTab("Treasury Management");
+      await dashboardPage.navigateToTab('Treasury Management');
       await tmPage.kickOffKycFlow();
       let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm(
         {
           timestamp: timestamp,
-        }
+        },
       );
       // await tmPage.uploadAccreditationDocuments();
-      console.log("submit company form");
+      console.log('submit company form');
       await tmPage.submitCompanyForm();
       await tmPage.validateCompanyInfoSummary(tmCompanyInfo);
       await tmPage.proceedToContinue();
       await tmPage.completeBeneficialOnwerForm({ timestamp: timestamp });
       await tmPage.certifyAndSubmitBeneficialOnwerForm();
       await tmPage.returnToDashBoardAfterSubmission();
-      console.log("returned to dashboard");
+      console.log('returned to dashboard');
 
-      // await alloyPage.logInAlloy();
-      // await alloyPage.approveDocs({
-      //   entityName: tmCompanyInfo.legalName,
-      // });
-      // await tmPage.approveCreditForUser();
-      // this is where we need to manually approve all docs uploaded
+      // alloy now auto approves accounts with 5M PLAID connections
       await opsCompanyPage.updateKYCStatusforCompany();
       await tmPage.reviewDocuments();
-      console.log("sign docs");
+      console.log('sign docs');
       await tmPage.completeDocSign(timestamp);
       await tmPage.validateWireTransferInstruction();
-      await dashboardPage.navigateToTab("Documents");
+      await tmPage.validateHighYieldAccountView(promissoryAmount, 'empty');
+
+      await dashboardPage.navigateToTab('Documents');
       let expectedDocs = [
-        "MainStreet Yield LLC - Note Investment.pdf",
-        "Treasury Management Document",
-        "MainStreet Yield LLC - Purchase Agreement.pdf",
-        "Treasury Management Document",
-        "IRS Form W-9.pdf",
-        "Treasury Management Document",
+        'MainStreet Yield LLC - Note Investment.pdf',
+        'Treasury Management Document',
+        'MainStreet Yield LLC - Purchase Agreement.pdf',
+        'Treasury Management Document',
+        'IRS Form W-9.pdf',
+        'Treasury Management Document',
       ];
       await docPage.validateFilesInDocumentTab(
         expectedDocs,
-        `DBA ${timestamp}`
+        `DBA ${timestamp}`,
       );
     });
-  }
+  },
 );

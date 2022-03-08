@@ -1,6 +1,6 @@
-import { expect, Locator, Page } from "@playwright/test";
-import { scrollElementIntoView } from "../helpers/Utils";
-import { CommonOperations } from "./CommonOperations";
+import { expect, Locator, Page } from '@playwright/test';
+import { scrollElementIntoView } from '../helpers/Utils';
+import { CommonOperations } from './CommonOperations';
 
 export class DashboardPage extends CommonOperations {
   readonly page: Page;
@@ -17,41 +17,41 @@ export class DashboardPage extends CommonOperations {
     super(page);
     this.page = page;
     this.startRAndDQualification = this.page.locator(
-      'a[href*="qualifying"]:right-of(:text("Finish your Federal R&D Tax Credit qualification"))'
+      'a[href*="qualifying"]:right-of(:text("Finish your Federal R&D Tax Credit qualification"))',
     );
     this.startProcurementSaving = this.page.locator('a[href*="procurement"]');
     this.qualifyLink = this.page.locator('a:has-text("Qualify")');
     this.connectToPayRoll = this.page.locator(
-      'a:right-of(:text("Connect your payroll system"), 200)'
+      'a:right-of(:text("Connect your payroll system"), 200)',
     );
     this.connectToAccounting = this.page.locator(
-      'a:right-of(:text("Connect your accounting system"), 200)'
+      'a:right-of(:text("Connect your accounting system"), 200)',
     );
-    this.govCreditNames = this.page.locator("p.program-name");
+    this.govCreditNames = this.page.locator('p.program-name');
     this.classifyExpensesSelector = 'a:text("Classify expenses")';
     this.disqualifiedRDCreditText = this.page.locator(
-      "p:text-is(\"There are no active credits at this moment. Don't worry, we're always searching for new savings alternatives for you behind the scenes.\")"
+      'p:text-is("There are no active credits at this moment. Don\'t worry, we\'re always searching for new savings alternatives for you behind the scenes.")',
     );
   }
 
   async goto() {
-    this.page.goto("/");
+    this.page.goto('/');
   }
 
   async navigateToTab(tabName: string) {
     expect(
       [
-        "Dashboard",
-        "Documents",
-        "Integrations",
-        "Refer & Earn",
-        "Settings",
-        "Billing",
-        "Treasury Management",
-      ].includes(tabName)
+        'Dashboard',
+        'Documents',
+        'Integrations',
+        'Refer & Earn',
+        'Settings',
+        'Billing',
+        'Treasury Management',
+      ].includes(tabName),
     );
     await this.page.waitForSelector(`a:has-text("${tabName}")`);
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(1500);
     await this.page.click(`a:has-text("${tabName}")`);
   }
 

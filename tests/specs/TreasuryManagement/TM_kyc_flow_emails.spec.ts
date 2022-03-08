@@ -3,30 +3,30 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-} from "@playwright/test";
-import { LoginPage } from "../../pages/LoginPage";
-import { AccountsPage } from "../../pages/AccountsPage";
-import { DashboardPage } from "../../pages/DashboardPage";
-import { DocumentsPage } from "../../pages/DocumentsPage";
+} from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage';
+import { AccountsPage } from '../../pages/AccountsPage';
+import { DashboardPage } from '../../pages/DashboardPage';
+import { DocumentsPage } from '../../pages/DocumentsPage';
 import {
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
-} from "../../helpers/TestObjects";
+} from '../../helpers/TestObjects';
 import {
   createNewUserAPI,
   setupUserToDashboard,
-} from "../../helpers/OnboardingAPIActions";
-import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
-import { getTimestamp } from "../../helpers/Utils";
-import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
-import { TMPage } from "../../pages/TMPage";
-import { AlloyPage } from "../../pages/AlloyPage";
-import { getHrefLinkValue } from "../../helpers/GmailActions";
-import { transferFunds } from "../../helpers/ExternalAPIHelpers";
-import { BrowserFactory } from "../../helpers/BrowserFactory";
+} from '../../helpers/OnboardingAPIActions';
+import { getTokenByGivenTestSession } from '../../helpers/TokenHelpers';
+import { getTimestamp } from '../../helpers/Utils';
+import { OpsCompanyPage } from '../../pages/OpsCompanyPage';
+import { TMPage } from '../../pages/TMPage';
+import { AlloyPage } from '../../pages/AlloyPage';
+import { getHrefLinkValue } from '../../helpers/GmailActions';
+import { transferFunds } from '../../helpers/ExternalAPIHelpers';
+import { BrowserFactory } from '../../helpers/BrowserFactory';
 
-test.describe.serial("Treasury Management Flow label:SMOKE", () => {
+test.describe.serial('Treasury Management Flow label:SMOKE', () => {
   let dashboardPage: DashboardPage;
   let opsPage: Page;
   let tmPage: TMPage;
@@ -63,7 +63,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     });
 
     newUser = accountsPage.buildDefaultUserInfo({
-      prefix: "TMKYCEmails",
+      prefix: 'TMKYCEmails',
       timestamp: timestamp,
     });
     companyId = await createNewUserAPI(apiContext, newUser);
@@ -87,9 +87,9 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
 
     // create a dedicated browser window just for ops tool
     opsURL = baseURL
-      ? baseURL.replace("dashboard.", "ops.")
-      : "https://ops.staging.mainstreet.com";
-    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+      ? baseURL.replace('dashboard.', 'ops.')
+      : 'https://ops.staging.mainstreet.com';
+    opsBrowser = new BrowserFactory(opsURL, 'webkit', headless!);
     await opsBrowser.setupBrowserForOps();
     opsPage = opsBrowser.page!;
     await opsPage.goto(opsURL);
@@ -99,9 +99,9 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     // make sure we are gettting the first email from client perspective
     const q: string = `subject: MainStreet High Yield: The wait is over - let’s get started!, to: ${newUser.email}`;
     const verifyLink: string = await getHrefLinkValue(
-      "qamainstreet@gmail.com",
+      'qamainstreet@gmail.com',
       q,
-      'a[href*="treasury-management"]'
+      'a[href*="treasury-management"]',
     );
     // make sure user can navigate to the form directly from link provided in email
     await page.goto(verifyLink);
@@ -116,9 +116,11 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await opsBrowser.close();
     await alloyContext.close();
     await alloyPageObject.close();
+    await page.close();
+    await context.close();
   });
 
-  test("Check all three client side emails and make sure we can navigate from email link, and expected signed doc appear in documents folder", async () => {
+  test('Check all three client side emails and make sure we can navigate from email link, and expected signed doc appear in documents folder', async () => {
     await tmPage.kickOffKycFlow();
     tmCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
@@ -146,36 +148,37 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     // this You're approved email appears to be only showing up after user had activated the account
     let q: string = `subject: You're Approved!, to: ${newUser.email}`;
     let verifyLink: string = await getHrefLinkValue(
-      "qamainstreet@gmail.com",
+      'qamainstreet@gmail.com',
       q,
-      'a[href*="reasury-management"]'
+      'a[href*="reasury-management"]',
     );
 
     await page.goto(verifyLink);
     await tmPage.validateWireTransferInstruction();
-    await dashboardPage.navigateToTab("Documents");
+    await tmPage.validateHighYieldAccountView(promissoryAmount, 'empty');
+    await dashboardPage.navigateToTab('Documents');
     let expectedDocs = [
-      "MainStreet Yield LLC - Note Investment.pdf",
-      "Treasury Management Document",
-      "MainStreet Yield LLC - Purchase Agreement.pdf",
-      "Treasury Management Document",
-      "IRS Form W-9.pdf",
-      "Treasury Management Document",
+      'MainStreet Yield LLC - Note Investment.pdf',
+      'Treasury Management Document',
+      'MainStreet Yield LLC - Purchase Agreement.pdf',
+      'Treasury Management Document',
+      'IRS Form W-9.pdf',
+      'Treasury Management Document',
     ];
     await docPage.validateFilesInDocumentTab(expectedDocs, `DBA ${timestamp}`);
   });
-  test("This only works with manual intervention currently. Wire an ammount to MT, then reconcile and confirm we get reci", async () => {
+  test('This only works with manual intervention currently. Wire an ammount to MT, then reconcile and confirm we get reci', async () => {
     // TODO: modern treasury is no longer auto-reconciling on sandbox, so need to
     // further investigate how to work this one out
     await transferFunds(promissoryAmount);
     // currently you'd have to manually reconcile for this section of test to complete successfully.
     let q = `subject: Hi, yields! to: ${newUser.email} "${newUser.firstName}"`;
     let verifyLink = await getHrefLinkValue(
-      "qamainstreet@gmail.com",
+      'qamainstreet@gmail.com',
       q,
-      'a[href*="reasury-management"]'
+      'a[href*="reasury-management"]',
     );
     await page.goto(verifyLink);
-    await tmPage.validateHighYieldAccountView(promissoryAmount, "Completed");
+    await tmPage.validateHighYieldAccountView(promissoryAmount, 'Completed');
   });
 });

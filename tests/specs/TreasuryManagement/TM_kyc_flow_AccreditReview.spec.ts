@@ -3,28 +3,27 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-} from "@playwright/test";
-import { LoginPage } from "../../pages/LoginPage";
-import { AccountsPage } from "../../pages/AccountsPage";
-import { DashboardPage } from "../../pages/DashboardPage";
+} from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage';
+import { AccountsPage } from '../../pages/AccountsPage';
+import { DashboardPage } from '../../pages/DashboardPage';
 import {
-  CompanyDetails,
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
-} from "../../helpers/TestObjects";
+} from '../../helpers/TestObjects';
 import {
   createNewUserAPI,
   setupUserToDashboard,
-} from "../../helpers/OnboardingAPIActions";
-import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
-import { getTimestamp } from "../../helpers/Utils";
-import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
-import { TMPage } from "../../pages/TMPage";
-import { AlloyPage } from "../../pages/AlloyPage";
-import { BrowserFactory } from "../../helpers/BrowserFactory";
+} from '../../helpers/OnboardingAPIActions';
+import { getTokenByGivenTestSession } from '../../helpers/TokenHelpers';
+import { getTimestamp } from '../../helpers/Utils';
+import { OpsCompanyPage } from '../../pages/OpsCompanyPage';
+import { TMPage } from '../../pages/TMPage';
+import { AlloyPage } from '../../pages/AlloyPage';
+import { BrowserFactory } from '../../helpers/BrowserFactory';
 
-test.describe.serial("Treasury Management Flow label:SMOKE", () => {
+test.describe.serial('Treasury Management Flow label:SMOKE', () => {
   let dashboardPage: DashboardPage;
   let companyId: string;
   let opsPage: Page;
@@ -58,7 +57,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     });
 
     newUser = accountsPage.buildDefaultUserInfo({
-      prefix: "TMAccredReview",
+      prefix: 'TMAccredReview',
       timestamp: timestamp,
     });
     companyId = await createNewUserAPI(apiContext, newUser);
@@ -80,9 +79,9 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
 
     // create a dedicated browser window just for ops tool
     opsURL = baseURL
-      ? baseURL.replace("dashboard.", "ops.")
-      : "https://ops.staging.mainstreet.com";
-    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+      ? baseURL.replace('dashboard.', 'ops.')
+      : 'https://ops.staging.mainstreet.com';
+    opsBrowser = new BrowserFactory(opsURL, 'webkit', headless!);
     await opsBrowser.setupBrowserForOps();
     opsPage = opsBrowser.page!;
     await opsPage.goto(opsURL);
@@ -100,12 +99,14 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await opsBrowser.close();
     await alloyContext.close();
     await alloyPageObject.close();
+    await page.close();
+    await context.close();
   });
 
-  test("from alloy set user to in_review state and verify user sees proper message on UI", async () => {
+  test('from alloy set user to in_review state and verify user sees proper message on UI', async () => {
     // await loginPage.logIn(newUser.email, newUser.password);
     await dashboardPage.goto();
-    await dashboardPage.navigateToTab("Treasury Management");
+    await dashboardPage.navigateToTab('Treasury Management');
     await tmPage.kickOffKycFlow();
     tmCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
@@ -123,20 +124,20 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     // await alloyPage.logInAlloy();
     await alloyPage.approveDocs({
       entityName: tmCompanyInfo.legalName,
-      status: "review",
+      status: 'review',
     });
     // await tmPage.approveCreditForUser();
     // this is where we need to manually approve all docs uploaded
-    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await opsCompanyPage.updateKYCStatusforCompany('approved');
     await tmPage.validateAccedReviewState();
   });
 
-  test("change accreditated status from review to approved and verify user sees first step complete", async () => {
+  test('change accreditated status from review to approved and verify user sees first step complete', async () => {
     await alloyPage.approveDocs({ entityName: tmCompanyInfo.legalName });
-    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await opsCompanyPage.updateKYCStatusforCompany('approved');
     await tmPage.reload();
     await tmPage.validateStepIsComplete(
-      "Verify your company information and owners"
+      'Verify your company information and owners',
     );
   });
 });

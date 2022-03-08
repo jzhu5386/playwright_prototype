@@ -4,10 +4,10 @@ import {
   FrameLocator,
   BrowserContext,
   expect,
-} from "@playwright/test";
-import path from "path";
-import { scrollElementIntoView } from "../helpers/Utils";
-import credentials from "../resources/testAccounts/qa_external_credentials.json";
+} from '@playwright/test';
+import path from 'path';
+import { scrollElementIntoView } from '../helpers/Utils';
+import credentials from '../resources/testAccounts/qa_external_credentials.json';
 
 export class CommonOperations {
   readonly page: Page;
@@ -43,68 +43,72 @@ export class CommonOperations {
   readonly ripplingTakeMeWhereILeftOff: Locator;
   readonly submitButton: Locator;
   readonly confirmExitButton: Locator;
+  readonly sideDrawerCloseButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.muiCircularProgress = this.page.locator(
-      "div.MuiCircularProgress-root"
+      'div.MuiCircularProgress-root',
     );
     this.continueButton = this.page.locator('button:text("Continue")');
     this.continueButtonAria = this.page.locator(
-      'button[aria-label="Continue"]'
+      'button[aria-label="Continue"]',
     );
     this.continueButtonTestID = this.page.locator(
-      "data-testid=continue-button"
+      'data-testid=continue-button',
     );
     this.continueButtonInContainer = this.page.locator(
-      'div[class*="Expandable__container"][style*="opacity: 1"] button[aria-label="Continue"]'
+      'div[class*="Expandable__container"][style*="opacity: 1"] button[aria-label="Continue"]',
     );
     this.nextButton = this.page.locator('span:text("Next")');
     this.backButton = this.page.locator('span:text("Back")');
     this.deleteButton = this.page.locator('button[aria-label="Delete"]');
-    this.backButtonEC = this.page.locator("data-testid=back-button");
+    this.backButtonEC = this.page.locator('data-testid=back-button');
     this.yesButton = this.page.locator('button[aria-label="Yes"]');
     this.noButton = this.page.locator('button[aria-label="No"]');
     this.saveButton = this.page.locator('button[aria-label="Save"]');
     this.connectButton = this.page.locator(
-      'div[style*="height: auto"] button[aria-label="Connect"]'
+      'div[style*="height: auto"] button[aria-label="Connect"]',
     );
     this.exitECFlowButton = this.page.locator('button[aria-label="Exit"]');
     this.payRollPageTitle = this.page.locator(
-      'text="Connect payroll software"'
+      'text="Connect payroll software"',
     );
     this.finchFrame = this.page.frameLocator('iframe[src*="finch"]');
     this.finchContinue = this.finchFrame.locator('button[type="submit"]');
-    this.finchProviderOption = this.finchFrame.locator("data-testid=provider");
-    this.finchLogin = this.finchFrame.locator("#username");
-    this.finchPassword = this.finchFrame.locator("#password");
+    this.finchProviderOption = this.finchFrame.locator('data-testid=provider');
+    this.finchLogin = this.finchFrame.locator('#username');
+    this.finchPassword = this.finchFrame.locator('#password');
     this.finchSignIn = this.finchFrame.locator('button[type="submit"]');
     this.payRollBox = this.page.locator(
-      'div[data-testid="autocomplete"] input'
+      'div[data-testid="autocomplete"] input',
     );
     this.payRollOptions = this.page.locator(
-      'ul[class="MuiAutocomplete-listbox"] li'
+      'ul[class="MuiAutocomplete-listbox"] li',
     );
     this.activeSteps = this.page.locator('div[class*="Stepper__active"] p');
     this.qualifyActiveSteps = this.page.locator(
-      'span[class*="MuiStepLabel-active"]'
+      'span[class*="MuiStepLabel-active"]',
     );
     this.proceedToRipplingLink = this.page.locator(
-      'a:text-is("Finish process on Rippling\'s platform")'
+      'a:text-is("Finish process on Rippling\'s platform")',
     );
-    this.ripplingEmailInput = this.page.locator("data-testid=input-email");
+    this.ripplingEmailInput = this.page.locator('data-testid=input-email');
     this.ripplingPasswordInput = this.page.locator(
-      "data-testid=input-password"
+      'data-testid=input-password',
     );
     this.ripplingLoginButton = this.page.locator(
-      'button[data-testid="Log in"]'
+      'button[data-testid="Log in"]',
     );
     this.ripplingTakeMeWhereILeftOff = this.page.locator(
-      'button[data-testid="Take me to where I left off"]'
+      'button[data-testid="Take me to where I left off"]',
     );
     this.submitButton = this.page.locator('button[aria-label="Submit"]');
     this.confirmExitButton = this.page.locator(
-      'div[class^="Modal__animated-container"] button[aria-label="Exit"]'
+      'div[class^="Modal__animated-container"] button[aria-label="Exit"]',
+    );
+    this.sideDrawerCloseButton = this.page.locator(
+      'div[class^="SideDrawer__footer"] button[aria-label="Close"]',
     );
   }
 
@@ -112,7 +116,7 @@ export class CommonOperations {
     let maxWait = 10000;
     try {
       await this.muiCircularProgress.waitFor({
-        state: "visible",
+        state: 'visible',
         timeout: 2000,
       });
     } catch (TimeoutError) {
@@ -131,7 +135,7 @@ export class CommonOperations {
 
   async proceedToContinue() {
     await this.continueButton.first().waitFor();
-    if (await this.page.locator("data-testid=continue-button").isVisible()) {
+    if (await this.page.locator('data-testid=continue-button').isVisible()) {
       await this.continueButtonTestID.click();
     } else {
       await this.continueButton.click();
@@ -145,12 +149,12 @@ export class CommonOperations {
 
   async proceedToNext() {
     await this.page.waitForTimeout(1000);
-    await this.nextButton.waitFor({ state: "visible", timeout: 5000 });
+    await this.nextButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.nextButton.click({ delay: 1000 });
   }
 
   async navigateBack() {
-    await this.backButton.waitFor({ state: "visible", timeout: 5000 });
+    await this.backButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.backButton.click({ delay: 1000 });
   }
 
@@ -221,14 +225,14 @@ export class CommonOperations {
     ) {
       await this.page
         .locator(
-          `div[class*="Radio__radio-button"] span:text-is("${selection}")`
+          `div[class*="Radio__radio-button"] span:text-is("${selection}")`,
         )
         .last()
         .click();
     } else {
       await scrollElementIntoView(this.page, questionSelector, 500);
       await this.page.click(
-        `span:text-is("${selection}"):below(:text("${question}"))`
+        `span:text-is("${selection}"):below(:text("${question}"))`,
       );
     }
     await this.page.waitForTimeout(200);
@@ -259,10 +263,10 @@ export class CommonOperations {
         .waitFor();
     } else {
       await this.page.click(
-        `button:text-is("${answer}"):below(:has-text("${question}"))`
+        `button:text-is("${answer}"):below(:has-text("${question}"))`,
       );
       await this.page.waitForSelector(
-        `button[class*="selected"]:text-is("${answer}"):below(:has-text("${question}"))`
+        `button[class*="selected"]:text-is("${answer}"):below(:has-text("${question}"))`,
       );
     }
     await this.page.waitForTimeout(200);
@@ -300,7 +304,7 @@ export class CommonOperations {
   }
   async validateSurveyQuestionSelectedAnswers(
     question: string,
-    answer: string
+    answer: string,
   ) {
     if (
       await this.page
@@ -309,12 +313,12 @@ export class CommonOperations {
         .isVisible()
     ) {
       const answerCard = this.page.locator(
-        `div[class*="Delay__container"] p:has-text("${question}")`
+        `div[class*="Delay__container"] p:has-text("${question}")`,
       );
       await answerCard.waitFor();
       await this.page
         .locator(
-          `p[class*="Text__regular"]:text-is("${answer}"):below(:text-is("${question}"), 3)`
+          `p[class*="Text__regular"]:text-is("${answer}"):below(:text-is("${question}"), 3)`,
         )
         .waitFor();
     }
@@ -333,7 +337,7 @@ export class CommonOperations {
     fileToUpload?: string[];
   }) {
     let payRollName: string;
-    await this.payRollPageTitle.waitFor({ state: "visible" });
+    await this.payRollPageTitle.waitFor({ state: 'visible' });
     await this.payRollBox.click();
 
     if (options === undefined || options!.payRollName === undefined) {
@@ -346,9 +350,9 @@ export class CommonOperations {
       payRollName = options!.payRollName;
     }
     await this.page.click(`text="${payRollName}"`);
-    if (payRollName === "Add manually") {
+    if (payRollName === 'Add manually') {
       await this.payrollFileUplaod(options!.fileToUpload!);
-    } else if (payRollName === "Rippling") {
+    } else if (payRollName === 'Rippling') {
       await this.complete_rippling_connection();
     } else if (
       options === undefined ||
@@ -372,19 +376,19 @@ export class CommonOperations {
       await this.finchContinue.waitFor({ timeout: 3000 });
       await this.finchContinue.click();
     } catch {
-      console.log("We probably went straight to provider option");
+      console.log('We probably went straight to provider option');
     }
     try {
       await this.finchContinue.waitFor({ timeout: 3000 });
       await this.finchContinue.click();
     } catch {
-      console.log("We probably went straight to provider option");
+      console.log('We probably went straight to provider option');
     }
 
     await this.finchProviderOption.click({ delay: 1000 });
     await this.finchLogin.waitFor();
-    await this.finchLogin.fill("smallco");
-    await this.finchPassword.fill("letmein");
+    await this.finchLogin.fill('smallco');
+    await this.finchPassword.fill('letmein');
     await this.finchSignIn.click();
   }
 
@@ -393,18 +397,18 @@ export class CommonOperations {
     await this.proceedToRipplingLink.click();
     await this.ripplingEmailInput.fill(credentials.rippling_sandbox.username);
     await this.ripplingPasswordInput.fill(
-      credentials.rippling_sandbox.password
+      credentials.rippling_sandbox.password,
     );
     await this.ripplingLoginButton.click();
     await this.ripplingTakeMeWhereILeftOff.click();
-    await this.page.locator("data-testid=Continue").click();
+    await this.page.locator('data-testid=Continue').click();
   }
 
   async payrollFileUplaod(fileToUpload: string[]) {
     for (let i = 0; i < fileToUpload.length; i++) {
       await this.page.setInputFiles(
         'input[id="file-input-"]',
-        path.join(__dirname, `../resources/testFiles/${fileToUpload[i]}`)
+        path.join(__dirname, `../resources/testFiles/${fileToUpload[i]}`),
       );
     }
     await this.submitButton.click();
@@ -417,49 +421,53 @@ export class CommonOperations {
    */
   async completePlaidLogin(
     accountName:
-      | "plaid_accredited"
-      | "plaid_unqualified"
-      | "plaid_nonDepository"
-      | "plaid_sandbox"
-      | "plaid_investmentdepository"
+      | 'plaid_accredited'
+      | 'plaid_unqualified'
+      | 'plaid_nonDepository'
+      | 'plaid_sandbox'
+      | 'plaid_investmentdepository'
+      | 'plaid_1_dollar_short',
   ) {
     const plaidFrame = this.page.frameLocator(
-      'iframe[id^="plaid-link-iframe-"]'
+      'iframe[id^="plaid-link-iframe-"]',
     );
-    await plaidFrame.locator("#aut-continue-button").waitFor();
-    await plaidFrame.locator("#aut-continue-button").click();
+    await plaidFrame.locator('#aut-continue-button').waitFor();
+    await plaidFrame.locator('#aut-continue-button').click();
     await plaidFrame
       .locator('button[class*="InstitutionSearchResult__button"]')
       .first()
       .click();
     let username: string;
     let password: string;
-    if (accountName === "plaid_accredited") {
+    if (accountName === 'plaid_accredited') {
       username = credentials.plaid_accredited.username;
       password = credentials.plaid_accredited.password;
-    } else if (accountName === "plaid_unqualified") {
+    } else if (accountName === 'plaid_unqualified') {
       username = credentials.plaid_unqualified.username;
       password = credentials.plaid_unqualified.password;
-    } else if (accountName === "plaid_nonDepository") {
+    } else if (accountName === 'plaid_nonDepository') {
       username = credentials.plaid_nonDepository.username;
       password = credentials.plaid_nonDepository.password;
-    } else if (accountName === "plaid_investmentdepository") {
+    } else if (accountName === 'plaid_investmentdepository') {
       username = credentials.plaid_investmentdepository.useranme;
       password = credentials.plaid_investmentdepository.password;
+    } else if (accountName === 'plaid_1_dollar_short') {
+      username = credentials.plaid_1_dollar_short.useranme;
+      password = credentials.plaid_1_dollar_short.password;
     } else {
       username = credentials.plaid_sandbox.username;
       password = credentials.plaid_sandbox.password;
     }
-    await plaidFrame.locator("#username").fill(username);
-    await plaidFrame.locator("#password").fill(password);
-    await plaidFrame.locator("#aut-submit-button").click();
+    await plaidFrame.locator('#username').fill(username);
+    await plaidFrame.locator('#password').fill(password);
+    await plaidFrame.locator('#aut-submit-button').click();
   }
 
   async activeStep(): Promise<string> {
     // await this.waitForLoadingMaskToDisappear();
     await this.activeSteps.waitFor();
     let step = await this.activeSteps.textContent();
-    step = step === null ? "" : step;
+    step = step === null ? '' : step;
     return step;
   }
 
@@ -474,7 +482,7 @@ export class CommonOperations {
   async qualifyActiveStep(): Promise<string> {
     await this.qualifyActiveSteps.waitFor();
     let step = await this.qualifyActiveSteps.textContent();
-    step = step === null ? "" : step;
+    step = step === null ? '' : step;
     return step;
   }
 
@@ -488,11 +496,11 @@ export class CommonOperations {
 
   async openTarget_blankLink(
     context: BrowserContext,
-    locator: Locator
+    locator: Locator,
   ): Promise<Page> {
     // Get page after a specific action (e.g. clicking a link)
     const [newPage] = await Promise.all([
-      context.waitForEvent("page"),
+      context.waitForEvent('page'),
       locator.click(), // Opens a new tab
     ]);
     await newPage.waitForLoadState();

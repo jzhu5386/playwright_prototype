@@ -1,7 +1,7 @@
-import { expect, Locator, Page } from "@playwright/test";
-import { CompanyTokenInfo, User } from "../helpers/TestObjects";
-import { generateRandomNumber } from "../helpers/Utils";
-import { CommonOperations } from "./CommonOperations";
+import { expect, Locator, Page } from '@playwright/test';
+import { CompanyTokenInfo, User } from '../helpers/TestObjects';
+import { generateRandomNumber } from '../helpers/Utils';
+import { CommonOperations } from './CommonOperations';
 
 export class OpsCompanyPage extends CommonOperations {
   readonly opsPage: Page;
@@ -24,37 +24,37 @@ export class OpsCompanyPage extends CommonOperations {
     super(opsPage);
     this.opsPage = opsPage;
     this.company = this.opsPage.locator('a>div:text-is("View Companies")');
-    this.includeTestAccountToggle = this.opsPage.locator("span.MuiSwitch-root");
+    this.includeTestAccountToggle = this.opsPage.locator('span.MuiSwitch-root');
     this.searchButton = this.opsPage.locator(
-      'button[data-testid="Search-iconButton"]'
+      'button[data-testid="Search-iconButton"]',
     );
     this.searchInput = this.opsPage.locator('div[data-test-id="Search"] input');
     this.companyCell = this.opsPage.locator(
-      'td[data-testid="MuiDataTableBodyCell-1-0"] a'
+      'td[data-testid="MuiDataTableBodyCell-1-0"] a',
     );
     this.viewTreasuryManagementLink = this.opsPage.locator(
-      'a:text-is("View Treasury Management Details")'
+      'a:text-is("View Treasury Management Details")',
     );
     this.confirmPromptButton = this.opsPage.locator(
-      'button[aria-label="Confirm"]'
+      'button[aria-label="Confirm"]',
     );
     this.createPromissoryNoteButton = this.opsPage.locator(
-      'button[aria-label="Add New Promissory Note"]'
+      'button[aria-label="Add New Promissory Note"]',
     );
     this.promissoryNoteAmmountInput = this.opsPage.locator(
-      'input[aria-label="Principal Amount"]'
+      'input[aria-label="Principal Amount"]',
     );
     this.promissoryNoteConfigInput = this.opsPage.locator(
-      'input[aria-label="Promissory Note Config"]'
+      'input[aria-label="Promissory Note Config"]',
     );
     this.backToCompanyPage = this.page.locator(
-      'div:text-is(" Back to Company Page")'
+      'div:text-is(" Back to Company Page")',
     );
     this.viewKYCApplicationLink = this.page.locator(
-      'a:has-text("View KYC Applications")'
+      'a:has-text("View KYC Applications")',
     );
     this.kycApplicationTableHeader = this.page.locator(
-      'div[class*="MuiTypography-h2"]:text-is("KYC Applications Table")'
+      'div[class*="MuiTypography-h2"]:text-is("KYC Applications Table")',
     );
   }
 
@@ -93,7 +93,7 @@ export class OpsCompanyPage extends CommonOperations {
         : options.amount;
     config =
       options?.config === undefined
-        ? "MainStreet Yield LLC, Promissory Note 1"
+        ? 'MainStreet Yield LLC, Promissory Note 1'
         : options.config;
     await this.page.waitForTimeout(2000);
     await this.viewTreasuryManagementLink.click();
@@ -102,7 +102,7 @@ export class OpsCompanyPage extends CommonOperations {
     await this.promissoryNoteConfigInput.click();
     await this.opsPage.click(`span:has-text("${config}")`);
     await this.submitButton.click();
-    console.log("Promissory Note Value: " + amount);
+    console.log('Promissory Note Value: ' + amount);
     return amount;
   }
 
@@ -114,8 +114,8 @@ export class OpsCompanyPage extends CommonOperations {
    * @param companyId
    */
   async updateKYCStatusforCompany(
-    status: "approved" | "rejected" | "in_review" = "approved",
-    companyId?: string
+    status: 'approved' | 'rejected' | 'in_review' = 'approved',
+    companyId?: string,
   ) {
     if (!(await this.kycApplicationTableHeader.isVisible())) {
       await this.backToCompanyPage.click();
@@ -124,15 +124,15 @@ export class OpsCompanyPage extends CommonOperations {
     await this.page.locator(`tr > td:nth-child(2):text-is("${companyId}")`)
       .waitFor;
     await this.page.waitForTimeout(2000);
-    await this.page.click("tr > td:nth-child(10) > svg");
+    await this.page.click('tr > td:nth-child(10) > svg');
     let found_status = await this.page
-      .locator("tr > td:nth-child(3)")
+      .locator('tr > td:nth-child(3)')
       .textContent();
     let retry = 3;
     while (found_status !== status && retry > 0) {
       await this.page.waitForTimeout(2000);
       found_status = await this.page
-        .locator("tr > td:nth-child(3)")
+        .locator('tr > td:nth-child(3)')
         .textContent();
       retry--;
     }
@@ -152,7 +152,7 @@ export class OpsCompanyPage extends CommonOperations {
     await this.navigateToCompanyDetailPage(newUser.email);
     await this.page.waitForTimeout(1000);
     promissoryAmount = await this.createPromissoryNote({
-      amount: generateRandomNumber(1, 15) * 1000000 + Number(companyId),
+      amount: generateRandomNumber(1, 20) * 1000000 + Number(companyId),
     });
     await this.enableTreasuryManagment(newUser.email);
     return promissoryAmount;

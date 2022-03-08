@@ -1,4 +1,4 @@
-import { APIRequestContext, expect, Page } from "@playwright/test";
+import { expect, Page } from "@playwright/test";
 import auth0Info from "../resources/testAccounts/qa_ops_auth0_account.json";
 import targetInfo from "../resources/testAccounts/qa_target_audience.json";
 import path from "path";

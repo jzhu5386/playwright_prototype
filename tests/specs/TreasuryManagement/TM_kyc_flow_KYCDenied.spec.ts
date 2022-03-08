@@ -4,41 +4,41 @@ import {
   APIRequestContext,
   BrowserContext,
   webkit,
-} from "@playwright/test";
-import { LoginPage } from "../../pages/LoginPage";
-import { AccountsPage } from "../../pages/AccountsPage";
-import { DashboardPage } from "../../pages/DashboardPage";
+} from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage';
+import { AccountsPage } from '../../pages/AccountsPage';
+import { DashboardPage } from '../../pages/DashboardPage';
 import {
   CompanyOwner,
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
-} from "../../helpers/TestObjects";
+} from '../../helpers/TestObjects';
 import {
   createNewUserAPI,
   setCompanyDetailAPI,
   setEmployeeDetailsAPI,
   setPayrollConnectionAPI,
   setupUserToDashboard,
-} from "../../helpers/OnboardingAPIActions";
+} from '../../helpers/OnboardingAPIActions';
 import {
   getTokenByGivenTestSession,
   getTokenViaServiceAccount,
   setupOpsLoginByPass,
-} from "../../helpers/TokenHelpers";
-import { CompanyDetailPage } from "../../pages/CompanyDetailPage";
+} from '../../helpers/TokenHelpers';
+import { CompanyDetailPage } from '../../pages/CompanyDetailPage';
 import {
   generateRandomNumber,
   getCurrentYear,
   getTimestamp,
-} from "../../helpers/Utils";
-import { EmployeePage } from "../../pages/EmployeePage";
-import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
-import { TMPage } from "../../pages/TMPage";
-import { AlloyPage } from "../../pages/AlloyPage";
-import { BrowserFactory } from "../../helpers/BrowserFactory";
+} from '../../helpers/Utils';
+import { EmployeePage } from '../../pages/EmployeePage';
+import { OpsCompanyPage } from '../../pages/OpsCompanyPage';
+import { TMPage } from '../../pages/TMPage';
+import { AlloyPage } from '../../pages/AlloyPage';
+import { BrowserFactory } from '../../helpers/BrowserFactory';
 
-test.describe.serial("Treasury Management Flow label:SMOKE", () => {
+test.describe.serial('Treasury Management Flow label:SMOKE', () => {
   let loginPage: LoginPage;
   let dashboardPage: DashboardPage;
   let opsBrowser: BrowserFactory;
@@ -73,7 +73,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     });
 
     newUser = accountsPage.buildDefaultUserInfo({
-      prefix: "TMKYCDenied",
+      prefix: 'TMKYCDenied',
       timestamp: timestamp,
     });
     let companyId = await createNewUserAPI(apiContext, newUser);
@@ -95,9 +95,9 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
 
     // create a dedicated browser window just for ops tool
     opsURL = baseURL
-      ? baseURL.replace("dashboard.", "ops.")
-      : "https://ops.staging.mainstreet.com";
-    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+      ? baseURL.replace('dashboard.', 'ops.')
+      : 'https://ops.staging.mainstreet.com';
+    opsBrowser = new BrowserFactory(opsURL, 'webkit', headless!);
     await opsBrowser.setupBrowserForOps();
     opsPage = opsBrowser.page!;
     await opsPage.goto(opsURL);
@@ -114,11 +114,13 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await opsBrowser.close();
     await alloyPageObject.close();
     await alloyContext.close();
+    await page.close();
+    await context.close();
   });
 
-  test("Trigger Denied state in KYC and user sees proper message from UI", async () => {
+  test('Trigger Denied state in KYC and user sees proper message from UI', async () => {
     await dashboardPage.goto();
-    await dashboardPage.navigateToTab("Treasury Management");
+    await dashboardPage.navigateToTab('Treasury Management');
     await tmPage.kickOffKycFlow();
     let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
@@ -134,7 +136,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await tmPage.certifyAndSubmitBeneficialOnwerForm();
     await tmPage.returnToDashBoardAfterSubmission();
 
-    await opsCompanyPage.updateKYCStatusforCompany("rejected");
+    await opsCompanyPage.updateKYCStatusforCompany('rejected');
     await tmPage.validateKYCverificationFailed();
 
     await alloyPage.logInAlloy();
@@ -143,13 +145,13 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     });
     await alloyPage.approveDocs({
       entityName: `${companyOwner[0].firstName} ${companyOwner[0].lastName}`,
-      type: "individual",
+      type: 'individual',
     });
 
-    await opsCompanyPage.updateKYCStatusforCompany("approved");
+    await opsCompanyPage.updateKYCStatusforCompany('approved');
     await tmPage.reload();
     await tmPage.validateStepIsComplete(
-      "Verify your company information and owners"
+      'Verify your company information and owners',
     );
   });
 });

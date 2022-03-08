@@ -3,26 +3,26 @@ import {
   Page,
   APIRequestContext,
   BrowserContext,
-} from "@playwright/test";
-import { LoginPage } from "../../pages/LoginPage";
-import { AccountsPage } from "../../pages/AccountsPage";
-import { DashboardPage } from "../../pages/DashboardPage";
+} from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage';
+import { AccountsPage } from '../../pages/AccountsPage';
+import { DashboardPage } from '../../pages/DashboardPage';
 import {
   CompanyTokenInfo,
   TMCompanyInfo,
   User,
-} from "../../helpers/TestObjects";
+} from '../../helpers/TestObjects';
 import {
   createNewUserAPI,
   setupUserToDashboard,
-} from "../../helpers/OnboardingAPIActions";
-import { getTokenByGivenTestSession } from "../../helpers/TokenHelpers";
-import { getTimestamp } from "../../helpers/Utils";
-import { OpsCompanyPage } from "../../pages/OpsCompanyPage";
-import { TMPage } from "../../pages/TMPage";
-import { BrowserFactory } from "../../helpers/BrowserFactory";
+} from '../../helpers/OnboardingAPIActions';
+import { getTokenByGivenTestSession } from '../../helpers/TokenHelpers';
+import { getTimestamp } from '../../helpers/Utils';
+import { OpsCompanyPage } from '../../pages/OpsCompanyPage';
+import { TMPage } from '../../pages/TMPage';
+import { BrowserFactory } from '../../helpers/BrowserFactory';
 
-test.describe.serial("Treasury Management Flow label:SMOKE", () => {
+test.describe.serial('Treasury Management Flow label:SMOKE', () => {
   let dashboardPage: DashboardPage;
   let opsContext: BrowserContext;
   let opsPage: Page;
@@ -53,7 +53,7 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     });
 
     newUser = accountsPage.buildDefaultUserInfo({
-      prefix: "TMCompanyInfoONLY",
+      prefix: 'TMCompanyInfoONLY',
       timestamp: timestamp,
     });
     let companyId = await createNewUserAPI(apiContext, newUser);
@@ -75,9 +75,9 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
 
     // create a dedicated browser window just for ops tool
     opsURL = baseURL
-      ? baseURL.replace("dashboard.", "ops.")
-      : "https://ops.staging.mainstreet.com";
-    opsBrowser = new BrowserFactory(opsURL, "webkit", headless!);
+      ? baseURL.replace('dashboard.', 'ops.')
+      : 'https://ops.staging.mainstreet.com';
+    opsBrowser = new BrowserFactory(opsURL, 'webkit', headless!);
     await opsBrowser.setupBrowserForOps();
     opsPage = opsBrowser.page!;
     await opsPage.goto(opsURL);
@@ -92,12 +92,14 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
   test.afterAll(async ({}) => {
     await apiContext.dispose();
     await opsBrowser.close();
+    await page.close();
+    await context.close();
   });
 
-  test("only submit company info form, whhich puts user in KYC in review state, make sure we can return and continue", async () => {
+  test('only submit company info form, whhich puts user in KYC in review state, make sure we can return and continue', async () => {
     // await loginPage.logIn(newUser.email, newUser.password);
     await dashboardPage.goto();
-    await dashboardPage.navigateToTab("Treasury Management");
+    await dashboardPage.navigateToTab('Treasury Management');
     await tmPage.kickOffKycFlow();
     let tmCompanyInfo: TMCompanyInfo = await tmPage.completKYCCompanyInfoForm({
       timestamp: timestamp,
@@ -112,13 +114,12 @@ test.describe.serial("Treasury Management Flow label:SMOKE", () => {
     await tmPage.loadingCompanyOwnerForm();
 
     await tmPage.exitTMVerificationFlow();
-    await page.waitForTimeout(2000);
-    await dashboardPage.navigateToTab("Treasury Management");
-    await page.waitForTimeout(2000);
+
+    // await page.waitForTimeout(2000);
     // check that we still see the start verification button and user can enter
     // company owner information afterwards
     await tmPage.validateCurrentActiveSteper(
-      "Verify your company information and owners"
+      'Verify your company information and owners',
     );
     await tmPage.continueKYCFlow();
     await tmPage.validateOnCompanyOwnerPage();
