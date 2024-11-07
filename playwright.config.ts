@@ -14,7 +14,7 @@ const config: PlaywrightTestConfig = {
     // browserName: 'webkit',
     baseURL:
       process.env.URL === undefined
-        ? 'https://dashboard.staging.mainstreet.com'
+        ? 'https://dashboard.staging.com'
         : process.env.URL, //  'http://localhost:3000'
   },
   timeout: 4 * 60 * 1000,
