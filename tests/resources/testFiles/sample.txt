@@ -3,7 +3,7 @@
 		"access_token": "",
 		"decodedToken": {
 			"user": {
-				"https://mainstreet.com/permissions": [
+				"https://vv/permissions": [
 					"access-ops-tool",
 					"charge-refund",
 					"fund-account",
@@ -18,7 +18,7 @@
 					"write-schedules",
 					"write-tax-forms"
 				],
-				"https://mainstreet.com/roles": [
+				"https://vv/roles": [
 					"super-admin"
 				],
 				"nickname": "",
