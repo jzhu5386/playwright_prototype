@@ -3,7 +3,7 @@
 		"access_token": "",
 		"decodedToken": {
 			"user": {
-				"https://mainstreet.com/permissions": [
+				"https://prototype.com/permissions": [
 					"access-ops-tool",
 					"charge-refund",
 					"fund-account",
@@ -18,11 +18,11 @@
 					"write-schedules",
 					"write-tax-forms"
 				],
-				"https://mainstreet.com/roles": [
+				"https://prototype.com/roles": [
 					"super-admin"
 				],
 				"nickname": "",
-				"name": "julie.zhu+ops_staging_test@mainstreet.com",
+				"name": "julie.zhu+ops_staging_test@prototype.com",
 				"picture": "https://s.gravatar.com/avatar/b869192bceda5410324239a7699af2f8?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fju.png",
 				"updated_at": "2022-02-16T18:50:12.449Z",
 				"email": "",
